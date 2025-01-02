@@ -1,12 +1,28 @@
 # SPDX-License-Identifier: MIT
 # Copyright 2024 Steve Winslow
 
+import os
+
 from lxml import etree
 
 from datatypes import License, NodeType, NodeSpacing, LicenseNode
 
 XHTML_NAMESPACE = "http://www.spdx.org/license"
 XHTML = "{%s}" % XHTML_NAMESPACE
+
+# Loads and parses all SPDX License List XML files in the specified
+# directory (non-recursively).
+# given:   dirpath: path to directory containing License List XML files
+# returns: dict of license ID => datatypes.License
+def loadAllLicenses(dirpath):
+    lics = {}
+    xmlfiles = sorted(os.listdir(dirpath))
+    for xmlfile in xmlfiles:
+        xmlpath = os.path.join(dirpath, xmlfile)
+        if os.path.isfile(xmlpath) and os.path.splitext(xmlpath)[1] == ".xml":
+            lic = loadLicense(xmlpath)
+            lics[lic.id] = lic
+    return lics
 
 # Loads and parses an SPDX License List XML file.
 # FIXME extend to handle exceptions as well

@@ -94,3 +94,21 @@ class LicenseNode:
 
         # text content for this node (for PLAINTEXT nodes only)
         self.text = ""
+
+# Represents the collection of data used by the application.
+class AppData:
+    def __init__(self):
+        super(AppData, self).__init__()
+
+        # dict of license ID => datatypes.License
+        # set with call to setLicenses() so that the UI components
+        # can be notified of changes, if UI has been loaded!
+        lics = {}
+
+        # user interface
+        ui = None
+
+    def setLicenses(self, lics):
+        self.lics = lics
+        if self.ui is not None:
+            self.ui.updateLics()
