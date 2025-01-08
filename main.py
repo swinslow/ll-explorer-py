@@ -4,7 +4,7 @@
 from pprint import pprint
 
 from datatypes import AppData, NodeType, FlatType
-from parsexml import loadAllLicenses, loadLicense, flattenLicense
+from parsexml import XMLParserConfig, XMLParser
 from ui import UI
 
 def printNode(n, indent=0):
@@ -17,13 +17,6 @@ def printNode(n, indent=0):
     print(f"{' '*indent}{n.type} ({n.lineno}): {info}")
     for c in n.children:
         printNode(c, indent+2)
-
-def printXMLAndTextNode():
-    lic = loadLicense("/Users/steve/programming/python/testing/lxml/licenses/BSD-3-Clause.xml")
-    print("===== LICENSE =====")
-    pprint(vars(lic))
-    print("===== LICENSE TEXT NODE CONTENTS =====")
-    printNode(lic.textNode)
 
 def printFlat(fns, indent=0):
     for fn in fns:
@@ -39,16 +32,21 @@ def printFlat(fns, indent=0):
 
 if __name__ == "__main__":
     xmldirpath = "/Users/steve/programming/python/testing/lxml/licenses"
+    cfg = XMLParserConfig()
+    parser = XMLParser(cfg)
+
     ad = AppData()
     ad.ui = UI()
-    ad.setLicenses(loadAllLicenses(xmldirpath))
+    ad.setLicenses(parser.loadAll(xmldirpath))
     ### FIXME TEMP
     licMIT = ad.lics["MIT"]
     #nodeMIT = licMIT.textNode
     #print(type(nodeMIT))
     #printNode(nodeMIT)
-    flattenLicense(licMIT)
+    parser.flatten(licMIT)
     printFlat(licMIT.textFlat)
+    import sys
+    sys.exit(1)
     ### FIXME END TEMP
     ad.ui.setup(ad)
     ad.ui.run()
