@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright 2024 Steve Winslow
+# Copyright 2024-2025 Steve Winslow
 
 from enum import Enum
 
@@ -33,8 +33,11 @@ class License:
         # original unparsed XML text for full license
         self.origXML = ""
 
-        # top-level processed text node - LicenseNode
+        # top-level processed <text> node - LicenseNode
         self.textNode = None
+
+        # flattened representation of <text> tokens - LicenseFlat
+        self.textFlat = []
 
 # Enum for different types of parsed license nodes.
 class NodeType(Enum):
@@ -94,6 +97,36 @@ class LicenseNode:
 
         # text content for this node (for PLAINTEXT nodes only)
         self.text = ""
+
+# Enum for different types of flattened license tokens.
+class FlatType(Enum):
+    INVALID     = 0
+    WHITESPACE  = 1
+    TEXT        = 2
+    OPTIONAL    = 3
+    REGEX       = 4
+
+# Represents a "flattened" node of token from a License's text.
+class LicenseFlat:
+    def __init__(self):
+        super(LicenseFlat, self).__init__()
+
+        # flattened type
+        self.type = FlatType.INVALID
+
+        # starting coords for this element within XML file
+        self.lineno = 0
+        # FIXME lxml doesn't currently appear to provide column numbers
+        # self.column = 0
+
+        # text content (for TEXT only)
+        self.text = ""
+
+        # children (for OPTIONAL only)
+        self.children = []
+
+        # regex (for REGEX only)
+        self.regex = ""
 
 # Represents the collection of data used by the application.
 class AppData:

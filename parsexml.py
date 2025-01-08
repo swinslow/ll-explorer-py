@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: MIT
-# Copyright 2024 Steve Winslow
+# Copyright 2024-2025 Steve Winslow
 
 import os
 
 from lxml import etree
 
-from datatypes import License, NodeType, NodeSpacing, LicenseNode
+from datatypes import License, NodeType, NodeSpacing, LicenseNode, \
+        LicenseFlat, FlatType
 
 XHTML_NAMESPACE = "http://www.spdx.org/license"
 XHTML = "{%s}" % XHTML_NAMESPACE
@@ -205,3 +206,102 @@ def _getPrecedingLineCount(s):
             return count
         count += 1
     return count
+
+# Creates a flattened version of the specified License's textNode.
+# given:   lic: License to flatten
+def flattenLicense(lic):
+    flats = []
+    if lic.textNode.type != NodeType.TOPTEXT:
+        raise RuntimeError(f"expected NodeType.TOPTEXT, got {lic.textNode.type}")
+    _flattenChildren(lic.textNode, flats)
+    lic.textFlat = flats
+
+def _flattenChildren(t, flats):
+    for c in t.children:
+        match c.type:
+            case NodeType.PLAINTEXT:
+                # create a flat text token
+                _addFlatsText(c, flats)
+            case (NodeType.P |
+                  NodeType.LIST |
+                  NodeType.ITEM |
+                  NodeType.SLHEADER):
+                # for each of these, flatten its children
+                _flattenChildren(c, flats)
+            case NodeType.BULLET:
+                # FIXME insert better bullet regex with lookahead.
+                # FIXME need lookahead b/c otherwise this will grab
+                # FIXME the first word of the next text bit, if the
+                # FIXME bullet is absent from the text being matched
+                _addFlatsRegex(c, flats, "\\S{0,7}")
+            case NodeType.COPYRIGHT:
+                # FIXME insert with lookahead
+                # FIXME consider whether spacing="both" is correct here
+                _addFlatsRegex(c, flats, ".*", NodeSpacing.BOTH)
+            case NodeType.ALT:
+                # FIXME insert with possible lookahead
+                _addFlatsRegex(c, flats, c.regex, c.spacing)
+            case NodeType.TITLE:
+                # FIXME consider whether spacing="both" is correct here
+                _addFlatsOptional(c, flats, NodeSpacing.BOTH)
+            case NodeType.OPTIONAL:
+                _addFlatsOptional(c, flats, c.spacing)
+            case NodeType.BR:
+                pass
+            case NodeType.WHITESPACE:
+                _addFlatsWhitespace(c, flats)
+            case _:
+                raise RuntimeError(f"expected valid NodeType, got {c.type} for line {c.lineno}")
+
+def _addFlatsText(c, flats):
+    lf = LicenseFlat()
+    lf.type = FlatType.TEXT
+    lf.lineno = c.lineno
+    lf.text = c.text
+    flats.append(lf)
+
+def _addFlatsWhitespace(c, flats):
+    lf = LicenseFlat()
+    lf.type = FlatType.WHITESPACE
+    lf.lineno = c.lineno
+    flats.append(lf)
+
+def _addFlatsRegex(c, flats, regex, spacing):
+    # FIXME for regex, consider whether spacing should be added as
+    # FIXME new whitespace nodes, or as additions to the regex itself
+
+    # add spacing before if applicable
+    # FIXME decide whether to treat UNSPECIFIED as equivalent to BEFORE
+    if spacing in [NodeSpacing.BEFORE, NodeSpacing.BOTH, NodeSpacing.UNSPECIFIED]:
+        _addFlatsWhitespace(c, flats)
+
+    # add regex flattened token
+    lf = LicenseFlat()
+    lf.type = FlatType.REGEX
+    lf.lineno = c.lineno
+    lf.regex = regex
+    flats.append(lf)
+
+    # add spacing after if applicable
+    if spacing in [NodeSpacing.AFTER, NodeSpacing.BOTH]:
+        _addFlatsWhitespace(c, flats)
+
+def _addFlatsOptional(c, flats, spacing):
+    # add spacing before if applicable
+    # FIXME decide whether to treat UNSPECIFIED as equivalent to BEFORE
+    if spacing in [NodeSpacing.BEFORE, NodeSpacing.BOTH, NodeSpacing.UNSPECIFIED]:
+        _addFlatsWhitespace(c, flats)
+
+    # add optional flattened token
+    lf = LicenseFlat()
+    lf.type = FlatType.OPTIONAL
+    lf.lineno = c.lineno
+    lf.children = []
+    # add flattened tokens _to this flat token, not overall_,
+    # for the optional node's own children
+    _flattenChildren(c, lf.children)
+    flats.append(lf)
+
+    # add spacing after if applicable
+    if spacing in [NodeSpacing.AFTER, NodeSpacing.BOTH]:
+        _addFlatsWhitespace(c, flats)
