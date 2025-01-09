@@ -20,6 +20,10 @@ class XMLParserConfig:
         # license XML files appear to treat things), or another option?
         self.defaultSpacing = NodeSpacing.BEFORE
 
+        # which spacing option should regex- and optional-like nodes
+        # (such as COPYRIGHT, TITLE, BULLET, etc.) be given?
+        self.otherNodeSpacing = NodeSpacing.BOTH
+
         # should adjacent flat whitespace nodes at the same level (e.g., 
         # not counting those under children of optional nodes) be
         # collapsed into a single whitespace node?
@@ -178,7 +182,7 @@ class XMLParser:
 
         # if any tail var exists, create a whitespace or text node,
         # depending if we have non-whitespace .tail content
-        # NOTE: tail content gets added to this node's _parent's_ children!
+        # note: tail content gets added to this node's _parent's_ children!
         if xmlnode.tail is not None:
             # FIXME BUG - line numbers are incorrect for tail nodes!
             if xmlnode.tail.strip() == "":
@@ -264,17 +268,16 @@ class XMLParser:
                     # FIXME need lookahead b/c otherwise this will grab
                     # FIXME the first word of the next text bit, if the
                     # FIXME bullet is absent from the text being matched
-                    self._addFlatsRegex(c, flats, "\\S{0,7}")
+                    self._addFlatsRegex(c, flats, "\\S{0,7}",
+                                        self.cfg.otherNodeSpacing)
                 case NodeType.COPYRIGHT:
-                    # FIXME insert with lookahead
-                    # FIXME consider whether spacing="both" is correct here
-                    self._addFlatsRegex(c, flats, ".*", NodeSpacing.BOTH)
-                case NodeType.ALT:
                     # FIXME insert with possible lookahead
+                    self._addFlatsRegex(c, flats, ".*", self.cfg.otherNodeSpacing)
+                case NodeType.ALT:
+                    # FIXME insert with possible lookahead for some regexes
                     self._addFlatsRegex(c, flats, c.regex, c.spacing)
                 case NodeType.TITLE:
-                    # FIXME consider whether spacing="both" is correct here
-                    self._addFlatsOptional(c, flats, NodeSpacing.BOTH)
+                    self._addFlatsOptional(c, flats, self.cfg.otherNodeSpacing)
                 case NodeType.OPTIONAL:
                     self._addFlatsOptional(c, flats, c.spacing)
                 case NodeType.BR:
@@ -302,8 +305,9 @@ class XMLParser:
         # FIXME new whitespace nodes, or as additions to the regex itself
 
         # add spacing before if applicable
-        # FIXME decide whether to treat UNSPECIFIED as equivalent to BEFORE
-        if spacing in [NodeSpacing.BEFORE, NodeSpacing.BOTH, NodeSpacing.UNSPECIFIED]:
+        if (spacing in [NodeSpacing.BEFORE, NodeSpacing.BOTH] or
+            (spacing == NodeSpacing.UNSPECIFIED and
+             self.cfg.defaultSpacing in [NodeSpacing.BEFORE, NodeSpacing.BOTH])):
             self._addFlatsWhitespace(c, flats)
 
         # add regex flattened token
@@ -314,13 +318,16 @@ class XMLParser:
         flats.append(lf)
 
         # add spacing after if applicable
-        if spacing in [NodeSpacing.AFTER, NodeSpacing.BOTH]:
+        if (spacing in [NodeSpacing.AFTER, NodeSpacing.BOTH] or
+            (spacing == NodeSpacing.UNSPECIFIED and
+             self.cfg.defaultSpacing in [NodeSpacing.AFTER, NodeSpacing.BOTH])):
             self._addFlatsWhitespace(c, flats)
 
     def _addFlatsOptional(self, c, flats, spacing):
         # add spacing before if applicable
-        # FIXME decide whether to treat UNSPECIFIED as equivalent to BEFORE
-        if spacing in [NodeSpacing.BEFORE, NodeSpacing.BOTH, NodeSpacing.UNSPECIFIED]:
+        if (spacing in [NodeSpacing.BEFORE, NodeSpacing.BOTH] or
+            (spacing == NodeSpacing.UNSPECIFIED and
+             self.cfg.defaultSpacing in [NodeSpacing.BEFORE, NodeSpacing.BOTH])):
             self._addFlatsWhitespace(c, flats)
 
         # add optional flattened token
@@ -334,5 +341,7 @@ class XMLParser:
         flats.append(lf)
 
         # add spacing after if applicable
-        if spacing in [NodeSpacing.AFTER, NodeSpacing.BOTH]:
+        if (spacing in [NodeSpacing.AFTER, NodeSpacing.BOTH] or
+            (spacing == NodeSpacing.UNSPECIFIED and
+             self.cfg.defaultSpacing in [NodeSpacing.AFTER, NodeSpacing.BOTH])):
             self._addFlatsWhitespace(c, flats)
