@@ -151,15 +151,8 @@ class TargetText:
         # original text string
         self.text = ""
 
-        # list of tuples for all transformed and cleaned tokens
-        # for this target text
-        # format: [(token1, start1, end1), (token2, start2, end2), ...]
-        # where
-        #   token: transformed and cleaned text content
-        #   start: index for starting character from original text
-        #   end:   1 + index for final character from original text
-        #          (so, self.text[start:end] == token)
-        self.tokens = []
+        # TextPreprocessor with results from pre-processing target string
+        self.tp = None
 
 # Represents the collection of data used by the application.
 class AppData:

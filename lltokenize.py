@@ -85,25 +85,55 @@ class LicenseTokenizer:
         # FIXME IMPLEMENT
         pass
 
-class TextTokenizerConfig:
+class TextPreprocessorConfig:
     def __init__(self):
-        super(TextTokenizerConfig, self).__init__()
+        super(TextPreprocessorConfig, self).__init__()
 
         # should multiple adjacent hyphen-like objects be combined
         # into a single hyphen?
         self.combineHyphens = True
 
-class TextTokenizer:
+class TextPreprocessor:
     def __init__(self, cfg):
-        super(TextTokenizer, self).__init__()
+        super(TextPreprocessor, self).__init__()
 
-        # tokenizer configuration object
+        # preprocessor configuration object
         self.cfg = cfg
 
+        # see docs/notes.md for descriptions of the following elements
+
+        # original unmodified string being tested for matches
+        self.orig = ""
+
+        # mapping from original string to row/col values
+        # list of tuples [(r1, c1), (r2, c2), ...] corresponding to
+        # row/col values of each character in self.orig
+        self.origrc = []
+
+        # processed and converted string, ready for matching
+        self.proc = ""
+
+        # mapping from proc string to orig string
+        # list of indices corresponding to iself.orig index of each
+        # character in self.proc
+        self.procmap = []
+
     # Converts a text string into a list of transformed and cleaned
-    # tokens, implementing portions of the SPDX Matching Guidelines.
-    # given:  tt: datatypes.TargetText
-    # result: stores the tokenized list in tt.tokens
-    def tokenize(self, tt):
-        tokens = []
-        r = re.compile(r"(\S+)")
+    # characters, implementing portions of the SPDX Matching Guidelines,
+    # with mappings to original string's corresponding characters.
+    # given:  target: text string to process
+    # result: Preprocessor is completed and values filled in
+    def process(self, target):
+        pass
+
+    # Step 1: prepare row and col values
+    def _step1(self):
+        self.origrc = []
+        r = 1
+        c = 0
+        for i in self.orig:
+            c += 1
+            self.origrc.append((r, c))
+            if i == "\n":
+                r += 1
+                c = 0

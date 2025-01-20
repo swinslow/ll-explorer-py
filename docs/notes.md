@@ -5,19 +5,18 @@
 Want to have:
 
 * **orig**: original string
+* **origrc**: list of tuples [(row1, col1), (row2, col2), ...] for each char in orig
 * **proc**: processed string ready for matching
-* **procmap**: list of tuples: (proc idx, orig idx, orig row, orig col)
-  - _proc idx_: index in proc (might not need; same as position in list)
-  - _orig idx_: index in orig; preceding char's index for newly inserted chars
-  - _orig row_: row in orig, accounting for line breaks
-  - _orig col_: column in orig, accounting for line breaks
+* **procmap**: list of corresponding indices in orig for each char in proc
+  - will include preceding character's index for e.g. newly inserted chars
 
-FIXME eventually, may want to have each of the orig values in procmap include start and end values.
+FIXME eventually, may want to track start + end values in procmap
 
-The **procmap** pointers to the index in the **orig** string are tracked for at least two reasons:
+The **procmap** pointers to the index in the **orig** string are tracked for several reasons:
 
-1. using the corresponding portion of the **orig** string when processing regular expressions in `<alt>` tags; and
-2. on errors, being able to communicate back to the user or caller the original position of the match failure.
+1. using the corresponding portion of the **orig** string when processing regular expressions in `<alt>` tags;
+2. on errors, being able to communicate back to the user or caller the original position of the match failure; and
+3. being able to show (via UI or otherwise) which row/column corresponds to a location in the match, via procmap => origrc
 
 Preprocessing for **proc** should involve accounting for:
 
@@ -38,28 +37,20 @@ FIXME things not fully handled above:
 
 ## Text preprocessing steps
 
-### Step 1: Line-based preprocessing
-
-FIXME consider whether step 1(a) is needed at all
-
-#### Step 1(a): Create line-split list from text string
-
-Using `str.splitlines()`, create a list of lines from the original text string.
-
-#### Step 1(b): Create original chars mapping index
+### Step 1: Create original chars mapping index
 
 For each character in the line-split full text string, create a list of length equal to the length of the text string.
 Each item in the list is a tuple, mapping the corresponding character in the original text string to (line, column) of its location.
 Walk through the list of lines from 1(a), adding these mappings.
 Remember to include a newline at the end of each line _other than_ the last one.
 
-Output from step 1: temporary list **origmap** with tuples containing second, third and fourth elements of **posmap**
+Result from step 1: **origrc** contains tuples with orig row and orig col
 
 ### Step 2: Replace comment characters
 
 In a copy of the **orig** string (**proc**), replace comment characters at the start of any line with an equivalent number of blank space characters.
 
-No adjustment to the character location mapping should be required.
+No adjustment to **procmap** should be required.
 
 ### Step 3: Convert to lowercase
 
@@ -70,11 +61,11 @@ See, e.g., [Unicode Standard Annex #21: Case Mappings](https://www.unicode.org/r
 
 > "For example, the German character U+00DF "ß" _small letter sharp s_ expands when uppercased to the sequence of two characters "SS". This also occurs where there is no precomposed character corresponding to a case mapping, such as with U+0149 "ŉ" _latin small letter n preceded by apostrophe_."
 
-So, this conversion should go character-by-character, and adjust the character location mapping as needed.
+So, this conversion should go character-by-character, and adjust the character location mapping in **procmap** as needed.
 
 ### Step 4: Convert repeating characters
 
-For each conversion step, the string length may change; so the conversion should adjust the character location mapping as needed.
+For each conversion step, the string length may change; so the conversion should adjust the character location mapping in **procmap** as needed.
 
 #### Step 4(a): Remove separators
 
@@ -102,7 +93,7 @@ FIXME determine what other variants this may include.
 
 ### Step 5: Convert word and character alternative options
 
-For each conversion step, the string length may change; so the conversion should adjust the character location mapping as needed.
+For each conversion step, the string length may change; so the conversion should adjust the character location mapping in **procmap** as needed.
 
 #### Step 5(a): Convert copyright symbols
 
@@ -124,4 +115,4 @@ Note the special handling for "sublicense" variants; all should be converted to 
 For each successive non-whitespace portion of the string, check for the presence of any of the `foundN` words.
 If found, replace them with the equivalent `replaceN` alternative, adjusting the character location mapping as needed.
 
-FIXME consider how to handle changes to the equivalent words file.
+FIXME consider how to handle changes to the equivalent words file over time.
