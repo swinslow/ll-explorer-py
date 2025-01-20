@@ -1,0 +1,127 @@
+# Process Notes
+
+## Text preprocessing end goal
+
+Want to have:
+
+* **orig**: original string
+* **proc**: processed string ready for matching
+* **procmap**: list of tuples: (proc idx, orig idx, orig row, orig col)
+  - _proc idx_: index in proc (might not need; same as position in list)
+  - _orig idx_: index in orig; preceding char's index for newly inserted chars
+  - _orig row_: row in orig, accounting for line breaks
+  - _orig col_: column in orig, accounting for line breaks
+
+FIXME eventually, may want to have each of the orig values in procmap include start and end values.
+
+The **procmap** pointers to the index in the **orig** string are tracked for at least two reasons:
+
+1. using the corresponding portion of the **orig** string when processing regular expressions in `<alt>` tags; and
+2. on errors, being able to communicate back to the user or caller the original position of the match failure.
+
+Preprocessing for **proc** should involve accounting for:
+
+* _comments_: remove all comment indicators _at the start of a line_
+* _capitalization_: change all characters to lowercase
+* _separators_: remove all repeating (3+ times) non-letter characters
+* _whitespace_: collapse all consecutive whitespace to a single blank space
+* _hyphens_: change all dashes, etc. to a single hyphen (`-`)
+* _quotes_: change all double quote marks, etc. to a single quote (`'`)
+* _copyright symbol_: replace all `©` symbols with `(c)`
+* _http protocol_: replace all `http://` with `https://`
+* _varietal words_: replace all equivalent words with the first option for each
+
+FIXME things not fully handled above:
+
+* _comment indicators_: consider whether we should be removing _trailing_ indicators as well, e.g. `*/` for C
+* _copyright symbol_: guidelines says to treat `©`, `(c)` and `Copyright` as equivalent, but simple substitution likely doesn't work here. `(c)` can be a list bullet and `Copyright` appears for lots of other non-copyright-notice reasons.
+
+## Text preprocessing steps
+
+### Step 1: Line-based preprocessing
+
+FIXME consider whether step 1(a) is needed at all
+
+#### Step 1(a): Create line-split list from text string
+
+Using `str.splitlines()`, create a list of lines from the original text string.
+
+#### Step 1(b): Create original chars mapping index
+
+For each character in the line-split full text string, create a list of length equal to the length of the text string.
+Each item in the list is a tuple, mapping the corresponding character in the original text string to (line, column) of its location.
+Walk through the list of lines from 1(a), adding these mappings.
+Remember to include a newline at the end of each line _other than_ the last one.
+
+Output from step 1: temporary list **origmap** with tuples containing second, third and fourth elements of **posmap**
+
+### Step 2: Replace comment characters
+
+In a copy of the **orig** string (**proc**), replace comment characters at the start of any line with an equivalent number of blank space characters.
+
+No adjustment to the character location mapping should be required.
+
+### Step 3: Convert to lowercase
+
+Convert all letter characters in the **proc** string to lowercase.
+
+This conversion _MAY_ result in changing the length of the string!
+See, e.g., [Unicode Standard Annex #21: Case Mappings](https://www.unicode.org/reports/tr21/tr21-5.html):
+
+> "For example, the German character U+00DF "ß" _small letter sharp s_ expands when uppercased to the sequence of two characters "SS". This also occurs where there is no precomposed character corresponding to a case mapping, such as with U+0149 "ŉ" _latin small letter n preceded by apostrophe_."
+
+So, this conversion should go character-by-character, and adjust the character location mapping as needed.
+
+### Step 4: Convert repeating characters
+
+For each conversion step, the string length may change; so the conversion should adjust the character location mapping as needed.
+
+#### Step 4(a): Remove separators
+
+Remove all repeating (3+ times) non-letter characters.
+
+Note that this step needs to occur before converting whitespace, because it may often lead to multiple preceding and subsequent space characters becoming adjacent.
+
+FIXME consider whether this should be limited to repeating non-letter characters that are, e.g., on their own line; or surrounded on both sides by whitespace; etc.
+
+#### Step 4(b): Convert whitespace
+
+Change all consecutive whitespace characters, including newlines, to a single blank space.
+
+#### Step 4(c): Convert hyphens
+
+Change all hyphens, dashes, en dashes, em dashes, and other variants to a single hyphen (`-`).
+
+FIXME determine what other variants this may include.
+
+#### Step 4(d): Convert quotes
+
+Change all variation of quotations (single, double, curly, etc.) to a single non-smart quote character (`'`).
+
+FIXME determine what other variants this may include.
+
+### Step 5: Convert word and character alternative options
+
+For each conversion step, the string length may change; so the conversion should adjust the character location mapping as needed.
+
+#### Step 5(a): Convert copyright symbols
+
+Change all instances of `©` to `(c)`.
+
+Note that this does _not_ currently handle equivalence of `(c)` and the word `Copyright`.
+I am hesitant to merge `(c)` and `Copyright`, since `(c)` may signal a list item bullet and `Copyright` will appear as a word in lots of places other than copyright notices.
+In any case, This should rarely be an issue for matching purposes outside of `<copyrightText>` tags, which are allowed to match to any content anyway.
+
+#### Step 5(b): Convert http protocol
+
+Change all instances of `http://` to `https://`.
+
+#### Step 5(c): Convert varietal words
+
+First, convert the [equivalent words file](https://spdx.org/licenses/equivalentwords.txt) to a list of tuples `[(found1, replace1), (found2, replace2), ...]`.
+Note the special handling for "sublicense" variants; all should be converted to "sublicense".
+
+For each successive non-whitespace portion of the string, check for the presence of any of the `foundN` words.
+If found, replace them with the equivalent `replaceN` alternative, adjusting the character location mapping as needed.
+
+FIXME consider how to handle changes to the equivalent words file.

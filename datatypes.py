@@ -36,8 +36,22 @@ class License:
         # top-level processed <text> node - LicenseNode
         self.textNode = None
 
-        # flattened representation of <text> tokens - LicenseFlat
+        # flattened representation of <text> node content - LicenseFlats
         self.textFlat = []
+
+        # list of tuples for all transformed and cleaned tokens
+        # for this license
+        # format: [(type1, flat1, idx1, content1),
+        #          (type2, flat2, idx2, content2), ...]
+        # where
+        #   type:    FlatType for this token
+        #   flat:    LicenseFlat containing this token
+        #   idx:     index of token within LicenseFlat's text content
+        #   content: WHITESPACE: N/A
+        #            TEXT:       actual text token's content
+        #            OPTIONAL:   list of child token tuples
+        #            REGEX:      regular expression
+        self.tokens = []
 
 # Enum for different types of parsed license nodes.
 class NodeType(Enum):
@@ -98,7 +112,7 @@ class LicenseNode:
         # text content for this node (for PLAINTEXT nodes only)
         self.text = ""
 
-# Enum for different types of flattened license tokens.
+# Enum for different types of flattened license nodes.
 class FlatType(Enum):
     INVALID     = 0
     WHITESPACE  = 1
@@ -106,7 +120,7 @@ class FlatType(Enum):
     OPTIONAL    = 3
     REGEX       = 4
 
-# Represents a "flattened" node of token from a License's text.
+# Represents a "flattened" node of parsed content from a License's text.
 class LicenseFlat:
     def __init__(self):
         super(LicenseFlat, self).__init__()
@@ -127,6 +141,25 @@ class LicenseFlat:
 
         # regex (for REGEX only)
         self.regex = ""
+
+# Represents a text string and its tokens for matching against
+# the SPDX License List XML files.
+class TargetText:
+    def __init__(self):
+        super(TargetText, self).__init__()
+
+        # original text string
+        self.text = ""
+
+        # list of tuples for all transformed and cleaned tokens
+        # for this target text
+        # format: [(token1, start1, end1), (token2, start2, end2), ...]
+        # where
+        #   token: transformed and cleaned text content
+        #   start: index for starting character from original text
+        #   end:   1 + index for final character from original text
+        #          (so, self.text[start:end] == token)
+        self.tokens = []
 
 # Represents the collection of data used by the application.
 class AppData:
