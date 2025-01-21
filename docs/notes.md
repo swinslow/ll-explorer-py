@@ -52,6 +52,8 @@ In a copy of the **orig** string (**proc**), replace comment characters at the s
 
 No adjustment to **procmap** should be required.
 
+FIXME note language in guideline referring to a comment indicator "which occurs at the beginning of _each_ line in a matchable section".
+
 ### Step 3: Convert to lowercase
 
 Convert all letter characters in the **proc** string to lowercase.

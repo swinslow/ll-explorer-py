@@ -40,3 +40,31 @@ class TextPreprocessorTestSuite(unittest.TestCase):
         # last character - should be "2", not newline
         self.assertEqual(self.tp.origrc[-1], (2, 6))
         self.assertEqual(self.tp.orig[-1], "2")
+
+    def test_step2_basic_removal(self):
+        # testing removal of # comment chars at beginning of lines
+        t = """# Commented out
+ Not commented out
+Don't drop at end #
+# Later comment
+Don't drop at end #"""
+
+        want = """  Commented out
+ Not commented out
+Don't drop at end #
+  Later comment
+Don't drop at end #"""
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+
+        # comment chars (#) at _start_ of lines should be removed,
+        # but not at end of lines
+        self.assertEqual(self.tp.proc, want)
+
+        # length of proc should be unchanged
+        self.assertEqual(len(self.tp.proc), len(self.tp.orig))
+
+        # orig should be unchanged
+        self.assertEqual(self.tp.orig, t)
