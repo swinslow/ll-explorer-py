@@ -14,10 +14,6 @@ from datatypes import License, LicenseFlat, FlatType, TargetText
 # because we don't want the matching for spacing to capture the line break
 _step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
 
-# helper to replace leading comments with whitespace in Step 2
-def _step2RegexHelper(m):
-    return m.group(1) + m.group(2) + " "*len(m.group(3)) + m.group(4)
-
 class LicenseTokenizerConfig:
     def __init__(self):
         super(LicenseTokenizerConfig, self).__init__()
@@ -153,4 +149,6 @@ class TextPreprocessor:
 
     # Step 2: replace leading comment characters with spaces
     def _step2(self):
-        self.proc = re.sub(_step2Regex, _step2RegexHelper, self.orig)
+        self.proc = re.sub(_step2Regex,
+            lambda m: m.group(1) + m.group(2) + " "*len(m.group(3)) + m.group(4),
+            self.orig)
