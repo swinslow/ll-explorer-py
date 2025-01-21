@@ -52,6 +52,8 @@ In a copy of the **orig** string (**proc**), replace comment characters at the s
 
 No adjustment to **procmap** should be required.
 
+FIXME consider whether to attempt comment removal at all, or whether to require user / caller to clean comment markers themselves.
+
 FIXME note language in guideline referring to a comment indicator "which occurs at the beginning of _each_ line in a matchable section".
 
 ### Step 3: Convert to lowercase
@@ -62,6 +64,12 @@ This conversion _MAY_ result in changing the length of the string!
 See, e.g., [Unicode Standard Annex #21: Case Mappings](https://www.unicode.org/reports/tr21/tr21-5.html):
 
 > "For example, the German character U+00DF "ß" _small letter sharp s_ expands when uppercased to the sequence of two characters "SS". This also occurs where there is no precomposed character corresponding to a case mapping, such as with U+0149 "ŉ" _latin small letter n preceded by apostrophe_."
+
+Note that the example above occurs when going from _lowercase_ to _uppercase_.
+In the other direction, there is at least one example where converting from _uppercase_ to _lowercase_ results in a longer string: "İ", see https://stackoverflow.com/questions/28683805/is-there-a-unicode-string-which-gets-longer-when-converted-to-lowercase.
+Testing in Python confirms that `"İ".lower()` increases the string size from 1 character to 2.
+
+Based on https://stackoverflow.com/questions/28695245/can-a-string-ever-get-shorter-when-converted-to-upper-lowercase, it appears that calling `str.lower()` on a string in CPython should never result in it getting _shorter_, so I'm not testing for that case at the moment.
 
 So, this conversion should go character-by-character, and adjust the character location mapping in **procmap** as needed.
 
@@ -118,3 +126,17 @@ For each successive non-whitespace portion of the string, check for the presence
 If found, replace them with the equivalent `replaceN` alternative, adjusting the character location mapping as needed.
 
 FIXME consider how to handle changes to the equivalent words file over time.
+
+## Helpers
+
+### proc text replacement helper
+
+Call with:
+  - old text start index
+  - old text length to replace
+  - new text
+
+Performs the following steps:
+  - removes old text portion from proc
+  - replaces it with new text
+  - updates procmap for these and all subsequent entries

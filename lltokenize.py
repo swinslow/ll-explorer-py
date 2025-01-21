@@ -152,3 +152,25 @@ class TextPreprocessor:
         self.proc = re.sub(_step2Regex,
             lambda m: m.group(1) + m.group(2) + " "*len(m.group(3)) + m.group(4),
             self.orig)
+        self.procmap = list(range(len(self.proc)))
+
+    # Step 3: convert to lowercase, adjusting character locations as needed
+    def _step3(self):
+        newProcList = []
+        newProcMap = []
+        origIdx = 0
+
+        for c in list(self.proc):
+            lo = c.lower()
+            newProcList.append(lo)
+
+            # if result is 1 character, just add current origIdx to procmap.
+            # if result is >1, need to adjust origIdx accordingly.
+            # note that this assumes that Step 3 is the first step to change
+            # procmap from anything other than a 1:1 mapping.
+            for _ in range(len(lo)):
+                newProcMap.append(origIdx)
+            origIdx += 1
+
+        self.proc = "".join(newProcList)
+        self.procmap = newProcMap

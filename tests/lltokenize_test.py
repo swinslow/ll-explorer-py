@@ -13,6 +13,8 @@ class TextPreprocessorTestSuite(unittest.TestCase):
     def tearDown(self):
         pass
 
+    ##### SMOKE TEST #####
+
     def test_smoke_initial_values(self):
         self.assertIsNotNone(self.tp)
         self.assertIsNotNone(self.tp.cfg)
@@ -21,6 +23,8 @@ class TextPreprocessorTestSuite(unittest.TestCase):
         self.assertEqual(self.tp.origrc, [])
         self.assertEqual(self.tp.proc, "")
         self.assertEqual(self.tp.procmap, [])
+
+    ##### PRIMARY STEP TESTS #####
 
     def test_step1(self):
         # testing creation of initial chars mapping index
@@ -43,7 +47,7 @@ class TextPreprocessorTestSuite(unittest.TestCase):
 
     def test_step2_basic_removal(self):
         # testing removal of # comment chars at beginning of lines
-        t = """# Commented out
+        t    = """# Commented out
  Not commented out
 Don't drop at end #
 # Later comment
@@ -68,3 +72,51 @@ Don't drop at end #"""
 
         # orig should be unchanged
         self.assertEqual(self.tp.orig, t)
+
+        # confirm procmap has been set with no adjustments
+        self.assertEqual(self.tp.procmap[0], 0)
+        self.assertEqual(self.tp.procmap[45], 45)
+        self.assertEqual(self.tp.procmap[89], 89)
+
+    def test_step3_normal_lowercase(self):
+        # testing lowercasing of all letters, where no change in length occurs
+        t    = "Hello World!"
+        want = "hello world!"
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+
+        # save procmap before final step, for testing
+        procmapBefore = list(self.tp.procmap)
+        self.tp._step3()
+
+        # proc should now be all lowercase
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap entries should not have changed (for this lowercasing)
+        self.assertEqual(self.tp.procmap, procmapBefore)
+
+    def test_step3_expanded_lowercase(self):
+        # testing lowercasing where Unicode character results in _longer_ string
+        t    = "aİsd"
+        want = "ai̇sd"
+        wantProcmap = [0, 1, 1, 2, 3]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+
+        # proc should now be all lowercase, with expanded length
+        self.assertEqual(len(self.tp.proc), 5)
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be expanded as well
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    ##### HELPER TESTS #####
+
+#    def test_helper_replace_chars_same_length(self):
+#        self.tp.orig = "hello world"
+#        self.tp.proc = self.tp.orig
