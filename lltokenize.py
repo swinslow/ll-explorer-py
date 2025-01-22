@@ -5,7 +5,11 @@ import re
 
 from datatypes import License, LicenseFlat, FlatType, TargetText
 
-# FIXME also handle trailing comment indicators: `**/`, `*/`, etc.
+##### REGEXES FOR MATCHING GUIDELINES PROCESSING #####
+
+# Step 2: Removing leading comments
+
+# FIXME decide whether to handle trailing comment indicators: `**/`, `*/`, etc.
 
 # FIXME consider whether this breaks any licenses with text that has
 # FIXME lines beginning with comment characters, particularly `/`
@@ -13,6 +17,12 @@ from datatypes import License, LicenseFlat, FlatType, TargetText
 # note we are using the Python \s regex values _except for_ \n,
 # because we don't want the matching for spacing to capture the line break
 _step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
+
+# Step 4(a): Removing separators
+
+_step4aRegex = re.compile(r"([^a-zA-Z0-9.])\1{2,}")
+
+##### LICENSE XML TEXT TOKENIZING #####
 
 class LicenseTokenizerConfig:
     def __init__(self):
@@ -94,6 +104,8 @@ class LicenseTokenizer:
         # FIXME IMPLEMENT
         pass
 
+##### TEXT TO TEST PREPROCESSING #####
+
 class TextPreprocessorConfig:
     def __init__(self):
         super(TextPreprocessorConfig, self).__init__()
@@ -135,6 +147,8 @@ class TextPreprocessor:
     def process(self, target):
         pass
 
+    ##### PROCESSING STEP FUNCTIONS #####
+
     # Step 1: prepare row and col values
     def _step1(self):
         self.origrc = []
@@ -175,25 +189,53 @@ class TextPreprocessor:
         self.proc = "".join(newProcList)
         self.procmap = newProcMap
 
+    # Step 4(a): remove separators (>3 adjacent non-alphanumeric characters)
+    def _step4a(self):
+        self._helperReplaceAll(_step4aRegex, lambda _: "")
+
+    ##### HELPER FUNCTIONS #####
+
     # Helper function to replace portion of a string and adjust procmap.
     # given:  - startIdx: index of first character in self.proc to replace
     #         - numReplace: # of characters in self.proc to replace
     #         - newText: string to insert in place of removed characters
     # result: newText is inserted into self.proc in place of replaced chars;
     #         self.procmap is updated to preserve prior mappings
+    # return: index of next _unreplaced_ character
     def _helperReplace(self, startIdx, numReplace, newText):
         # replace characters in self.proc
         self.proc = self.proc[:startIdx] + newText + self.proc[startIdx+numReplace:]
 
         # determine what we're doing to self.procmap based on difference
         # in length of old vs. replacement characters
-        diff = len(newText) - numReplace
+        lt = len(newText)
+        diff = lt - numReplace
         if diff < 0:
             # shorter string => remove excess characters
-            self.procmap[(numReplace - 1):(numReplace - 1 - diff)] = []
+            repStart = startIdx + lt
+            repEnd = repStart - diff
+            self.procmap[repStart:repEnd] = []
         elif diff > 0:
             # longer string => add repeats of last extended value
             ext = startIdx + numReplace
             rep = [self.procmap[ext - 1]] * diff
             self.procmap = self.procmap[:ext] + rep + self.procmap[ext:]
         # no change to procmap if diff == 0
+
+        # return index of next unreplaced character
+        return startIdx + lt
+
+    # Helper function to replace all portions of a string matching a regex and
+    # adjust procmap.
+    # given:  - r: raw-string regex to match against
+    #         - l: function taking an re.Match object and returning string
+    #              to replace matched portion
+    # result: all instances of matching strings are replaced with corresponding
+    #         calls to l(m); self.procmap is updated
+    def _helperReplaceAll(self, r, l):
+        idx = 0
+        while True:
+            m = re.search(r, self.proc[idx:])
+            if m is None:
+                break
+            idx = self._helperReplace(m.start() + idx, m.end()-m.start(), l(m))

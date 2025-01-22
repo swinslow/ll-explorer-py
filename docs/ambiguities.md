@@ -1,5 +1,11 @@
 # Ambiguities in SPDX Matching Guidelines
 
+## Policy questions
+
+* Purpose and ambiguity:
+  - Should the SPDX Matching Guidelines have a single, unambiguous interpretation in order for all tools to apply them uniformly?
+  - Or, are they intended as general guidelines, where each tool may implement them differently and reach differing results?
+
 ## Technical questions
 
 The following _technical_ questions appear to be ambiguous under the SPDX Matching Guidelines, and may warrant further investigation:
@@ -7,9 +13,17 @@ The following _technical_ questions appear to be ambiguous under the SPDX Matchi
 * Regular expressions:
   - Should regular expressions in `<alt>` tags be matched with regards to applying the rest of the Matching Guidelines before evaluation?
   - For example: Should spaces in the regex be evaluated as if they were `\s+`? Should quote marks and dashes in the regex be evaluated as if they were any quotes and any hyphens or dashes?
+
 * Punctuation:
   - Quotes:
     - Should successive quote marks be treated as a single quote? For example, should `''` be interpreted as equivalent to `"`, which would in turn be interpreted as equivalent to `'`?
+
+* Separators:
+  - The guideline refers to a "_non-letter_ character repeated 3 or more times to establish a visual separation". Should repeating numbers and periods (e.g. `...`) also be excluded from being ignored?
+  - The purpose of "to establish a visual separation" is ambiguous. Would this include:
+    - repeats only on their own line?
+    - repeats separated from other characters by whitespace?
+    - repeats occuring directly adjacent to alphanumeric characters?
 
 ## Semantic questions
 

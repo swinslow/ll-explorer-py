@@ -83,7 +83,9 @@ Remove all repeating (3+ times) non-letter characters.
 
 Note that this step needs to occur before converting whitespace, because it may often lead to multiple preceding and subsequent space characters becoming adjacent.
 
-FIXME consider whether this should be limited to repeating non-letter characters that are, e.g., on their own line; or surrounded on both sides by whitespace; etc.
+FIXME consider whether this should be limited to repeating non-letter characters that are, e.g., on their own line; or surrounded on both sides by whitespace; etc. If removing only those on their own line, may want to process this step earlier, e.g. in Step 2 along with removing comment indicators.
+
+FIXME assume that "non-letter character" does _not_ include numbers, or periods (since "..." should not get removed). Will not remove repeating letters, numbers, or periods.
 
 #### Step 4(b): Convert whitespace
 
@@ -135,10 +137,25 @@ FIXME consider how to handle changes to the equivalent words file over time.
 
 Call with:
   - old text start index
-  - old text length to replace
-  - new text
+  - old text length (number of chars) to replace
+  - new text to insert
 
 Performs the following steps:
   - removes old text portion from proc
   - replaces it with new text
   - updates procmap for these and all subsequent entries
+  - returns index of next character _not_ replaced
+
+### proc text replace-all helper
+
+Call with:
+  - regex for what to find
+  - function (which takes an re.Match object) for what to replace it with
+
+Performs the following steps:
+  - re.search() for regex in proc string
+  - if None, done
+  - if not None:
+    - call arg function with Match to get replacement text
+    - call `_helperReplace` to replace matched text
+    - loop back to beginning for new re.search() beginning from next non-replaced character, as returned by `_helperReplace`
