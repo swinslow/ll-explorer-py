@@ -69,7 +69,7 @@ Note that the example above occurs when going from _lowercase_ to _uppercase_.
 In the other direction, there is at least one example where converting from _uppercase_ to _lowercase_ results in a longer string: "İ", see https://stackoverflow.com/questions/28683805/is-there-a-unicode-string-which-gets-longer-when-converted-to-lowercase.
 Testing in Python confirms that `"İ".lower()` increases the string size from 1 character to 2.
 
-Based on https://stackoverflow.com/questions/28695245/can-a-string-ever-get-shorter-when-converted-to-upper-lowercase, it appears that calling `str.lower()` on a string in CPython should never result in it getting _shorter_, so I'm not testing for that case at the moment.
+Based on https://stackoverflow.com/questions/28695245/can-a-string-ever-get-shorter-when-converted-to-upper-lowercase, it appears that calling `str.lower()` on a string in CPython should never result in it getting _shorter_, so I'm not handling or testing for that case at the moment.
 
 So, this conversion should go character-by-character, and adjust the character location mapping in **procmap** as needed.
 
@@ -92,6 +92,8 @@ Change all consecutive whitespace characters, including newlines, to a single bl
 #### Step 4(c): Convert hyphens
 
 Change all hyphens, dashes, en dashes, em dashes, and other variants to a single hyphen (`-`).
+
+Use cfg.combineHyphens to determine whether multiple adjacent hyphen-like objects should be combined into a single hyphen (if True), or remain as multiple separate hyphens (if False).
 
 FIXME determine what other variants this may include.
 

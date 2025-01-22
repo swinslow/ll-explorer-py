@@ -174,3 +174,26 @@ class TextPreprocessor:
 
         self.proc = "".join(newProcList)
         self.procmap = newProcMap
+
+    # Helper function to replace portion of a string and adjust procmap.
+    # given:  - startIdx: index of first character in self.proc to replace
+    #         - numReplace: # of characters in self.proc to replace
+    #         - newText: string to insert in place of removed characters
+    # result: newText is inserted into self.proc in place of replaced chars;
+    #         self.procmap is updated to preserve prior mappings
+    def _helperReplace(self, startIdx, numReplace, newText):
+        # replace characters in self.proc
+        self.proc = self.proc[:startIdx] + newText + self.proc[startIdx+numReplace:]
+
+        # determine what we're doing to self.procmap based on difference
+        # in length of old vs. replacement characters
+        diff = len(newText) - numReplace
+        if diff < 0:
+            # shorter string => remove excess characters
+            self.procmap[(numReplace - 1):(numReplace - 1 - diff)] = []
+        elif diff > 0:
+            # longer string => add repeats of last extended value
+            ext = startIdx + numReplace
+            rep = [self.procmap[ext - 1]] * diff
+            self.procmap = self.procmap[:ext] + rep + self.procmap[ext:]
+        # no change to procmap if diff == 0

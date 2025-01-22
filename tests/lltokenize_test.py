@@ -117,6 +117,53 @@ Don't drop at end #"""
 
     ##### HELPER TESTS #####
 
-#    def test_helper_replace_chars_same_length(self):
-#        self.tp.orig = "hello world"
-#        self.tp.proc = self.tp.orig
+    def test_helper_replace_chars_same_length(self):
+        t    = "hello world"
+        want = "heABCDEFrld"
+        wantProcmap = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        self.tp.orig = t
+        self.tp.proc = self.tp.orig
+        self.tp.procmap = list(range(len(self.tp.proc)))
+
+        self.tp._helperReplace(2, 6, "ABCDEF")
+
+        # proc should now contain replacement string, and be same length
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should not have changed
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_helper_replace_chars_longer(self):
+        t    = "hello world"
+        want = "heABCDEFGHIrld"
+        wantProcmap = [0, 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 8, 9, 10]
+
+        self.tp.orig = t
+        self.tp.proc = self.tp.orig
+        self.tp.procmap = list(range(len(self.tp.proc)))
+
+        self.tp._helperReplace(2, 6, "ABCDEFGHI")
+
+        # proc should now contain replacement string, and be longer as a result
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be expanded, with repeating last character for added ones
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_helper_replace_chars_shorter(self):
+        t    = "hello world"
+        want = "heABCrld"
+        wantProcmap = [0, 1, 2, 3, 4, 8, 9, 10]
+
+        self.tp.orig = t
+        self.tp.proc = self.tp.orig
+        self.tp.procmap = list(range(len(self.tp.proc)))
+
+        self.tp._helperReplace(2, 6, "ABC")
+
+        # proc should now contain replacement string, and be shorter as a result
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be shortened, losing some values
+        self.assertEqual(self.tp.procmap, wantProcmap)
