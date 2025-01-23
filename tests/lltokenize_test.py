@@ -405,7 +405,32 @@ Don't drop at end #"""
         # should be converted to (c) while other forms stay the same
         self.assertEqual(self.tp.proc, want)
 
-        # procmap should remain unchanged
+        # procmap should be expanded accordingly
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step5b_http_protocol(self):
+        # testing conversion of "http://" to "https://" only where complete
+        # note not testing for uppercase b/c will be lowercased in step 3
+        t    = "http http://"
+        want = "http https://"
+        # note procmap adjustment is at end because entire portion is changed
+        wantProcmap = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+        self.tp._step4d()
+        self.tp._step5a()
+        self.tp._step5b()
+
+        # should be converted to "https://" where full form used
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be expanded accordingly
         self.assertEqual(self.tp.procmap, wantProcmap)
 
     ##### HELPER TESTS #####

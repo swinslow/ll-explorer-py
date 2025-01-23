@@ -36,6 +36,9 @@ _step4dRegex = re.compile(r"['\"«»‘’‚‛“”„‟‹›`]+")
 # Step 5(a): Convert copyright symbol
 _step5aRegex = re.compile(r"©")
 
+# Step 5(b): Convert http protocol
+_step5bRegex = re.compile(r"http\:\/\/")
+
 ##### LICENSE XML TEXT TOKENIZING #####
 
 class LicenseTokenizerConfig:
@@ -228,6 +231,10 @@ class TextPreprocessor:
     # Step 5(a): convert copyright symbol
     def _step5a(self):
         self._helperReplaceAll(_step5aRegex, lambda _: "(c)")
+
+    # Step 5(b): convert http protocol
+    def _step5b(self):
+        self._helperReplaceAll(_step5bRegex, lambda _: "https://")
 
     ##### HELPER FUNCTIONS #####
 
