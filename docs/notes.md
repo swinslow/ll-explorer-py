@@ -87,6 +87,8 @@ FIXME consider whether this should be limited to repeating non-letter characters
 
 FIXME assume that "non-letter character" does _not_ include numbers, or periods (since "..." should not get removed). Will not remove repeating letters, numbers, or periods.
 
+FIXME also consider whether this rule should apply to whitespace characters themselves?
+
 #### Step 4(b): Convert whitespace
 
 Change all consecutive whitespace characters, including newlines, to a single blank space.

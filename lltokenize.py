@@ -19,8 +19,10 @@ from datatypes import License, LicenseFlat, FlatType, TargetText
 _step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
 
 # Step 4(a): Removing separators
+_step4aRegex = re.compile(r"([^a-zA-Z0-9.\s])\1{2,}")
 
-_step4aRegex = re.compile(r"([^a-zA-Z0-9.])\1{2,}")
+# Step 4(b): Converting whitespace
+_step4bRegex = re.compile(r"\s+")
 
 ##### LICENSE XML TEXT TOKENIZING #####
 
@@ -192,6 +194,10 @@ class TextPreprocessor:
     # Step 4(a): remove separators (>3 adjacent non-alphanumeric characters)
     def _step4a(self):
         self._helperReplaceAll(_step4aRegex, lambda _: "")
+
+    # Step 4(b): convert whitespace
+    def _step4b(self):
+        self._helperReplaceAll(_step4bRegex, lambda _: " ")
 
     ##### HELPER FUNCTIONS #####
 

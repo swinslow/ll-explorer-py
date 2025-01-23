@@ -168,7 +168,66 @@ Don't drop at end #"""
         self.tp._step3()
         self.tp._step4a()
 
-        # separator should now be removed and gap closed
+        # separator should now be removed and gap closed, but not
+        # removing letters, numbers or periods
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be adjusted for removal
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step4a_preserve_whitespace(self):
+        # testing preserving repeats of whitespace, since whitespace rule
+        # in 4(b) will convert them to a single space, rather than ignore
+        # (remove) them altogether
+        t    = "aaa   bbb"
+        want = "aaa   bbb"
+        wantProcmap = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+
+        # whitespace should not be treated as a separator to remove
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should remain unchanged
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step4b_basic_whitespace(self):
+        # testing conversion of whitespace within a single line
+        t    = "aaa      bbb"
+        want = "aaa bbb"
+        wantProcmap = [0, 1, 2, 3, 9, 10, 11]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        #self.tp._step4a()
+        self.tp._step4b()
+
+        # should be reduced to a single whitespace
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be adjusted for removal
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step4b_complex_whitespace(self):
+        # testing conversion of leading / trailing and variations of whitespace
+        t    = " \n aaa \n  bbb     	\t "
+        want = " aaa bbb "
+        wantProcmap = [0, 3, 4, 5, 6, 10, 11, 12, 13]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+
+        # should be reduced to a single whitespace
         self.assertEqual(self.tp.proc, want)
 
         # procmap should be adjusted for removal

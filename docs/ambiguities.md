@@ -24,6 +24,9 @@ The following _technical_ questions appear to be ambiguous under the SPDX Matchi
     - repeats only on their own line?
     - repeats separated from other characters by whitespace?
     - repeats occuring directly adjacent to alphanumeric characters?
+  - Presumably should not include ignoring whitespace characters as "_non-letter_ characters"?
+    - _Ignoring_ them would lead to treating them as non-existing, rather than the whitespace rule treating as a single white space
+    - Perhaps can justify carving them out from the separators rule, because they don't "establish a visual separator"?
 
 ## Semantic questions
 
