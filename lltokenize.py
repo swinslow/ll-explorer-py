@@ -7,7 +7,7 @@ from datatypes import License, LicenseFlat, FlatType, TargetText
 
 ##### REGEXES FOR MATCHING GUIDELINES PROCESSING #####
 
-# Step 2: Removing leading comments
+# Step 2: Remove leading comments
 
 # FIXME decide whether to handle trailing comment indicators: `**/`, `*/`, etc.
 
@@ -18,11 +18,11 @@ from datatypes import License, LicenseFlat, FlatType, TargetText
 # because we don't want the matching for spacing to capture the line break
 _step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
 
-# Step 4(a): Removing separators on own lines with optional whitespace
+# Step 4(a): Remove separators on own lines with optional whitespace
 #_step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)[^a-zA-Z0-9\s]\1{2,}([ \t\r\f\v]*)")
 _step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)([^a-zA-Z0-9\s])\3{2,}([ \t\r\f\v]*)")
 
-# Step 4(b): Converting whitespace
+# Step 4(b): Convert whitespace
 _step4bRegex = re.compile(r"\s+")
 
 # Step 4(c): Convert hyphen-like characters
@@ -32,6 +32,9 @@ _step4cRegex = re.compile(r"[-‐‑‒–—―]+")
 # Step 4(d): Convert quote-like characters
 # FIXME there are a lot of them, consider which others to include
 _step4dRegex = re.compile(r"['\"«»‘’‚‛“”„‟‹›`]+")
+
+# Step 5(a): Convert copyright symbol
+_step5aRegex = re.compile(r"©")
 
 ##### LICENSE XML TEXT TOKENIZING #####
 
@@ -221,6 +224,10 @@ class TextPreprocessor:
     # Step 4(d): convert quote-like characters
     def _step4d(self):
         self._helperReplaceAll(_step4dRegex, lambda _: "'")
+
+    # Step 5(a): convert copyright symbol
+    def _step5a(self):
+        self._helperReplaceAll(_step5aRegex, lambda _: "(c)")
 
     ##### HELPER FUNCTIONS #####
 

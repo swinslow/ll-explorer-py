@@ -126,7 +126,7 @@ Change all instances of `©` to `(c)`.
 
 Note that this does _not_ currently handle equivalence of `(c)` and the word `Copyright`.
 I am hesitant to merge `(c)` and `Copyright`, since `(c)` may signal a list item bullet and `Copyright` will appear as a word in lots of places other than copyright notices.
-In any case, This should rarely be an issue for matching purposes outside of `<copyrightText>` tags, which are allowed to match to any content anyway.
+In any case, this should rarely be an issue for matching purposes outside of `<copyrightText>` tags, which are allowed to match to any content anyway.
 
 #### Step 5(b): Convert http protocol
 

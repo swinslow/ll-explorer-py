@@ -384,6 +384,30 @@ Don't drop at end #"""
         # procmap should be adjusted accordingly
         self.assertEqual(self.tp.procmap, wantProcmap)
 
+    def test_step5a_copyright_symbol(self):
+        # testing conversion of copyright symbol to "(c)"
+        # note not testing for uppercase b/c will be lowercased in step 3
+        t    = "copyright (c) c © (c)"
+        want = "copyright (c) c (c) (c)"
+        wantProcmap = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+                       13, 14, 15, 16, 16, 16, 17, 18, 19, 20]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+        self.tp._step4d()
+        self.tp._step5a()
+
+        # should be converted to (c) while other forms stay the same
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should remain unchanged
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
     ##### HELPER TESTS #####
 
     def test_helper_replace_chars_same_length(self):
