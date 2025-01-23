@@ -115,11 +115,11 @@ Don't drop at end #"""
         # procmap should be expanded as well
         self.assertEqual(self.tp.procmap, wantProcmap)
 
-    def test_step4a_basic_separators(self):
-        # testing removal of a single in-line separator
-        t    = "hello@@@world"
-        want = "helloworld"
-        wantProcmap = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12]
+    def test_step4a_basic_separator(self):
+        # testing removal of a single separator on its own line
+        t    = "hello\n@@@\nworld"
+        want = "hello\n\nworld"
+        wantProcmap = [0, 1, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14]
 
         self.tp.orig = t
         self.tp._step1()
@@ -127,20 +127,23 @@ Don't drop at end #"""
         self.tp._step3()
         self.tp._step4a()
 
-        # separator should now be removed and gap closed
+        # separator should now be removed, leaving newline
         self.assertEqual(self.tp.proc, want)
 
         # procmap should be adjusted for removal
         self.assertEqual(self.tp.procmap, wantProcmap)
 
-    def test_step4a_complex_separators(self):
-        # testing removal of multiple separators, excluding 1- and 2-length
-        t    = "@no\n&&&yes\nyes-----yes\n&&no"
-        want = "@no\nyes\nyesyes\n&&no"
-        wantProcmap = [0, 1, 2, 3,
-                       7, 8, 9, 10,
-                       11, 12, 13, 19, 20, 21, 22,
-                       23, 24, 25, 26]
+    def test_step4a_basic_separator_whitespace(self):
+        # testing removal of a single separator on its own line with whitespace
+        t    = "hello\n   @@@     \nworld"
+        want = "hello\n        \nworld"
+        # note that the revised procmap here includes [9, 10, 11] from "@@@"
+        # rather than [14, 15, 16] from "   ", because replacement occurs for the
+        # matched string as a whole. For whitespace it won't matter since it'll
+        # be closed in step 4(b) anyway.
+        wantProcmap = [0, 1, 2, 3, 4, 5,
+                       6, 7, 8, 9, 10, 11, 12, 13,
+                       17, 18, 19, 20, 21, 22]
 
         self.tp.orig = t
         self.tp._step1()
@@ -148,19 +151,55 @@ Don't drop at end #"""
         self.tp._step3()
         self.tp._step4a()
 
-        # separator should now be removed and gap closed
+        # separator should now be removed, leaving whitespace and newline
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be adjusted for removal
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step4a_do_not_remove_inline_separators(self):
+        # testing non-removal of a single in-line separator
+        t    = "hello@@@world"
+        want = "hello@@@world"
+        wantProcmap = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+
+        # separator should not be removed
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be unchanged
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step4a_complex_separators(self):
+        # testing removal of multiple separators, excluding 1- and 2-length
+        t    = "@\n&&&\n-----\n&&"
+        want = "@\n\n\n&&"
+        wantProcmap = [0, 1, 5, 11, 12, 13]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+
+        # 3+ length separators should be removed
         self.assertEqual(self.tp.proc, want)
 
         # procmap should be adjusted for removal
         self.assertEqual(self.tp.procmap, wantProcmap)
 
     def test_step4a_preserve_separators(self):
-        # testing preserving repeats of letters, numbers, and periods
+        # testing preserving repeats of letters and numbers
         # note that we aren't testing uppercase letters, because
         # earlier step 3 converts all to lowercase before we get here
-        t    = "aaa@@@111...---bbb"
-        want = "aaa111...bbb"
-        wantProcmap = [0, 1, 2, 6, 7, 8, 9, 10, 11, 15, 16, 17]
+        t    = "aaa\n@@@\n111\n...\n---\nbbb"
+        want = "aaa\n\n111\n\n\nbbb"
+        wantProcmap = [0, 1, 2, 3, 7, 8, 9, 10, 11, 15, 19, 20, 21, 22]
 
         self.tp.orig = t
         self.tp._step1()
@@ -169,7 +208,7 @@ Don't drop at end #"""
         self.tp._step4a()
 
         # separator should now be removed and gap closed, but not
-        # removing letters, numbers or periods
+        # removing letters or numbers
         self.assertEqual(self.tp.proc, want)
 
         # procmap should be adjusted for removal

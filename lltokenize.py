@@ -18,8 +18,9 @@ from datatypes import License, LicenseFlat, FlatType, TargetText
 # because we don't want the matching for spacing to capture the line break
 _step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
 
-# Step 4(a): Removing separators
-_step4aRegex = re.compile(r"([^a-zA-Z0-9.\s])\1{2,}")
+# Step 4(a): Removing separators on own lines with optional whitespace
+#_step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)[^a-zA-Z0-9\s]\1{2,}([ \t\r\f\v]*)")
+_step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)([^a-zA-Z0-9\s])\3{2,}([ \t\r\f\v]*)")
 
 # Step 4(b): Converting whitespace
 _step4bRegex = re.compile(r"\s+")
@@ -197,7 +198,10 @@ class TextPreprocessor:
 
     # Step 4(a): remove separators (>3 adjacent non-alphanumeric characters)
     def _step4a(self):
-        self._helperReplaceAll(_step4aRegex, lambda _: "")
+        self._helperReplaceAll(
+            _step4aRegex,
+            lambda m: m.group(1) + m.group(2) + m.group(4)
+        )
 
     # Step 4(b): convert whitespace
     def _step4b(self):
