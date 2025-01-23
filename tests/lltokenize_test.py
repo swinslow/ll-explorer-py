@@ -233,6 +233,75 @@ Don't drop at end #"""
         # procmap should be adjusted for removal
         self.assertEqual(self.tp.procmap, wantProcmap)
 
+    def test_step4c_basic_dashes(self):
+        # testing conversion of hyphen-like objects to a hyphen-minus
+        # below is hyphen-minus, hyphen, en dash, em dash
+        t    = "a-b‐c–d—e"
+        want = "a-b-c-d-e"
+        wantProcmap = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+
+        # should be converted to hyphen-minus
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should remain unchanged
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step4c_combine_dashes(self):
+        # testing combination of multiple adjacent hyphen-like objects into
+        # a single hyphen-minus
+        # below is three hyphen-minuses; hyphen-minus + en dash + em dash;
+        # en dash + dollar sign + em dash; single hyphen
+        t    = "a---b-–—c–$—d‐"
+        want = "a-b-c-$-d-"
+        wantProcmap = [0, 1, 4, 5, 8, 9, 10, 11, 12, 13]
+
+        self.tp.cfg.combineHyphens = True
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+
+        # all should be converted to single hyphen-minuses
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be adjusted accordingly
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step4c_do_not_combine_dashes(self):
+        # testing combination of multiple adjacent hyphen-like objects into
+        # a single hyphen-minus
+        # below is three hyphen-minuses; hyphen-minus + en dash + em dash;
+        # en dash + dollar sign + em dash; single hyphen
+        t    = "a---b-–—c–$—d‐"
+        want = "a---b---c-$-d-"
+        wantProcmap = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+        self.tp.cfg.combineHyphens = False
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+
+        # all should be converted to hyphen-minuses
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should remain unchanged
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
     ##### HELPER TESTS #####
 
     def test_helper_replace_chars_same_length(self):

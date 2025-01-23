@@ -24,6 +24,10 @@ _step4aRegex = re.compile(r"([^a-zA-Z0-9.\s])\1{2,}")
 # Step 4(b): Converting whitespace
 _step4bRegex = re.compile(r"\s+")
 
+# Step 4(c): Convert hyphen-like characters
+# FIXME there are a lot of them, consider which others to include
+_step4cRegex = re.compile(r"[-‐‑‒–—―]+")
+
 ##### LICENSE XML TEXT TOKENIZING #####
 
 class LicenseTokenizerConfig:
@@ -198,6 +202,13 @@ class TextPreprocessor:
     # Step 4(b): convert whitespace
     def _step4b(self):
         self._helperReplaceAll(_step4bRegex, lambda _: " ")
+
+    # Step 4(c): convert hyphen-like characters
+    def _step4c(self):
+        self._helperReplaceAll(
+            _step4cRegex,
+            lambda m: "-" if self.cfg.combineHyphens else "-"*(len(m.group(0)))
+        )
 
     ##### HELPER FUNCTIONS #####
 

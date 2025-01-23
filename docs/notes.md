@@ -83,6 +83,9 @@ Remove all repeating (3+ times) non-letter characters.
 
 Note that this step needs to occur before converting whitespace, because it may often lead to multiple preceding and subsequent space characters becoming adjacent.
 
+For now, remove only those that are on their own line (with optional non-`\n` whitespace before or after).
+Removing separators mid-lines with other content causes conflicts with step 4(c) below (converting hyphen-like characters).
+
 FIXME consider whether this should be limited to repeating non-letter characters that are, e.g., on their own line; or surrounded on both sides by whitespace; etc. If removing only those on their own line, may want to process this step earlier, e.g. in Step 2 along with removing comment indicators.
 
 FIXME assume that "non-letter character" does _not_ include numbers, or periods (since "..." should not get removed). Will not remove repeating letters, numbers, or periods.
@@ -93,9 +96,9 @@ FIXME also consider whether this rule should apply to whitespace characters them
 
 Change all consecutive whitespace characters, including newlines, to a single blank space.
 
-#### Step 4(c): Convert hyphens
+#### Step 4(c): Convert hyphen-like characters
 
-Change all hyphens, dashes, en dashes, em dashes, and other variants to a single hyphen (`-`).
+Change all hyphens, dashes, en dashes, em dashes, and other variants to a single hyphen-minus (`-`, U+002D).
 
 Use cfg.combineHyphens to determine whether multiple adjacent hyphen-like objects should be combined into a single hyphen (if True), or remain as multiple separate hyphens (if False).
 
