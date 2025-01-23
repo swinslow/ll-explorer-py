@@ -341,6 +341,49 @@ Don't drop at end #"""
         # procmap should remain unchanged
         self.assertEqual(self.tp.procmap, wantProcmap)
 
+    def test_step4d_basic_quotes(self):
+        # testing conversion of quote-like objects to a single quote
+        t    = "a'b\"c«d»e‘f’g‚h‛i“j”k„l‟m‹n›o`p"
+        want = "a'b'c'd'e'f'g'h'i'j'k'l'm'n'o'p"
+        wantProcmap = list(range(len(t)))
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+        self.tp._step4d()
+
+        # should be converted to single quote marks
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should remain unchanged
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step4d_combine_quotes(self):
+        # testing combination of multiple adjacent quote-like objects into
+        # a single quote
+        t    = "a'\"`b'c`‘d‘’e"
+        want = "a'b'c'd'e"
+        wantProcmap = [0, 1, 4, 5, 6, 7, 9, 10, 12]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+        self.tp._step4d()
+
+        # all should be converted to combined single quote marks
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be adjusted accordingly
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
     ##### HELPER TESTS #####
 
     def test_helper_replace_chars_same_length(self):

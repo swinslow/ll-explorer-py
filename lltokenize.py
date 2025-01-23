@@ -29,6 +29,10 @@ _step4bRegex = re.compile(r"\s+")
 # FIXME there are a lot of them, consider which others to include
 _step4cRegex = re.compile(r"[-‐‑‒–—―]+")
 
+# Step 4(d): Convert quote-like characters
+# FIXME there are a lot of them, consider which others to include
+_step4dRegex = re.compile(r"['\"«»‘’‚‛“”„‟‹›`]+")
+
 ##### LICENSE XML TEXT TOKENIZING #####
 
 class LicenseTokenizerConfig:
@@ -213,6 +217,10 @@ class TextPreprocessor:
             _step4cRegex,
             lambda m: "-" if self.cfg.combineHyphens else "-"*(len(m.group(0)))
         )
+
+    # Step 4(d): convert quote-like characters
+    def _step4d(self):
+        self._helperReplaceAll(_step4dRegex, lambda _: "'")
 
     ##### HELPER FUNCTIONS #####
 

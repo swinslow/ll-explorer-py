@@ -104,11 +104,17 @@ Use cfg.combineHyphens to determine whether multiple adjacent hyphen-like object
 
 FIXME determine what other variants this may include.
 
+Reference: https://jkorpela.fi/dashes.html
+
 #### Step 4(d): Convert quotes
 
-Change all variation of quotations (single, double, curly, etc.) to a single non-smart quote character (`'`).
+Change all variation of quotations (single, double, curly, etc.), including a series of multiple quotes, to a single non-smart quote character (`'`).
+
+FIXME determine whether multiple quote marks should be kept as separate instead of merged.
 
 FIXME determine what other variants this may include.
+
+Reference: https://hexdocs.pm/ex_unicode/Unicode.Category.QuoteMarks.html
 
 ### Step 5: Convert word and character alternative options
 
