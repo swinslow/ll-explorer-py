@@ -7,37 +7,53 @@ from datatypes import License, LicenseFlat, FlatType, TargetText
 
 ##### REGEXES FOR MATCHING GUIDELINES PROCESSING #####
 
-# Step 2: Remove leading comments
+EQUIVALENTWORDS_PATH = "resources/equivalentwords.txt"
 
-# FIXME decide whether to handle trailing comment indicators: `**/`, `*/`, etc.
+class TextPreprocessorRegexes:
+    def __init__(self, equivalentsPath):
+        super(TextPreprocessorRegexes, self).__init__()
 
-# FIXME consider whether this breaks any licenses with text that has
-# FIXME lines beginning with comment characters, particularly `/`
+        # Step 2: Remove leading comments
+        # FIXME decide handling trailing comment indicators: `**/`, `*/`, etc.
+        # FIXME consider whether this breaks any licenses with text that has
+        # FIXME lines beginning with comment characters, particularly `/`
+        # note we are using the Python \s regex values _except for_ \n,
+        # because we don't want the matching for spacing to capture the line break
+        self._step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
 
-# note we are using the Python \s regex values _except for_ \n,
-# because we don't want the matching for spacing to capture the line break
-_step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
+        # Step 4(a): Remove separators on own lines with optional whitespace
+        #_step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)[^a-zA-Z0-9\s]\1{2,}([ \t\r\f\v]*)")
+        self._step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)([^a-zA-Z0-9\s])\3{2,}([ \t\r\f\v]*)")
 
-# Step 4(a): Remove separators on own lines with optional whitespace
-#_step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)[^a-zA-Z0-9\s]\1{2,}([ \t\r\f\v]*)")
-_step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)([^a-zA-Z0-9\s])\3{2,}([ \t\r\f\v]*)")
+        # Step 4(b): Convert whitespace
+        self._step4bRegex = re.compile(r"\s+")
 
-# Step 4(b): Convert whitespace
-_step4bRegex = re.compile(r"\s+")
+        # Step 4(c): Convert hyphen-like characters
+        # FIXME there are a lot of them, consider which others to include
+        self._step4cRegex = re.compile(r"[-‐‑‒–—―]+")
 
-# Step 4(c): Convert hyphen-like characters
-# FIXME there are a lot of them, consider which others to include
-_step4cRegex = re.compile(r"[-‐‑‒–—―]+")
+        # Step 4(d): Convert quote-like characters
+        # FIXME there are a lot of them, consider which others to include
+        self._step4dRegex = re.compile(r"['\"«»‘’‚‛“”„‟‹›`]+")
 
-# Step 4(d): Convert quote-like characters
-# FIXME there are a lot of them, consider which others to include
-_step4dRegex = re.compile(r"['\"«»‘’‚‛“”„‟‹›`]+")
+        # Step 5(a): Convert copyright symbol
+        self._step5aRegex = re.compile(r"©")
 
-# Step 5(a): Convert copyright symbol
-_step5aRegex = re.compile(r"©")
+        # Step 5(b): Convert http protocol
+        self._step5bRegex = re.compile(r"http\:\/\/")
 
-# Step 5(b): Convert http protocol
-_step5bRegex = re.compile(r"http\:\/\/")
+        # Step 5(c): Convert equivalent words
+        # list of tuples in form [(to, from, regexFrom), ...]
+        self._equivalents = []
+        with open(equivalentsPath, "r") as f:
+            lines = f.readlines()
+        for line in lines:
+            res = line.strip().split(",")
+            self._equivalents.append((
+                res[0],
+                res[1],
+                re.compile(r"(^|[^a-zA-Z])(" + res[1] + r")($|[^a-zA-Z])")
+            ))
 
 ##### LICENSE XML TEXT TOKENIZING #####
 
@@ -121,7 +137,7 @@ class LicenseTokenizer:
         # FIXME IMPLEMENT
         pass
 
-##### TEXT TO TEST PREPROCESSING #####
+##### TEXT PREPROCESSING #####
 
 class TextPreprocessorConfig:
     def __init__(self):
@@ -137,6 +153,9 @@ class TextPreprocessor:
 
         # preprocessor configuration object
         self.cfg = cfg
+
+        # regexes for preprocessor
+        self.regexes = TextPreprocessorRegexes(EQUIVALENTWORDS_PATH)
 
         # see docs/notes.md for descriptions of the following elements
 
@@ -180,7 +199,7 @@ class TextPreprocessor:
 
     # Step 2: replace leading comment characters with spaces
     def _step2(self):
-        self.proc = re.sub(_step2Regex,
+        self.proc = re.sub(self.regexes._step2Regex,
             lambda m: m.group(1) + m.group(2) + " "*len(m.group(3)) + m.group(4),
             self.orig)
         self.procmap = list(range(len(self.proc)))
@@ -209,32 +228,40 @@ class TextPreprocessor:
     # Step 4(a): remove separators (>3 adjacent non-alphanumeric characters)
     def _step4a(self):
         self._helperReplaceAll(
-            _step4aRegex,
+            self.regexes._step4aRegex,
             lambda m: m.group(1) + m.group(2) + m.group(4)
         )
 
     # Step 4(b): convert whitespace
     def _step4b(self):
-        self._helperReplaceAll(_step4bRegex, lambda _: " ")
+        self._helperReplaceAll(self.regexes._step4bRegex, lambda _: " ")
 
     # Step 4(c): convert hyphen-like characters
     def _step4c(self):
         self._helperReplaceAll(
-            _step4cRegex,
+            self.regexes._step4cRegex,
             lambda m: "-" if self.cfg.combineHyphens else "-"*(len(m.group(0)))
         )
 
     # Step 4(d): convert quote-like characters
     def _step4d(self):
-        self._helperReplaceAll(_step4dRegex, lambda _: "'")
+        self._helperReplaceAll(self.regexes._step4dRegex, lambda _: "'")
 
     # Step 5(a): convert copyright symbol
     def _step5a(self):
-        self._helperReplaceAll(_step5aRegex, lambda _: "(c)")
+        self._helperReplaceAll(self.regexes._step5aRegex, lambda _: "(c)")
 
     # Step 5(b): convert http protocol
     def _step5b(self):
-        self._helperReplaceAll(_step5bRegex, lambda _: "https://")
+        self._helperReplaceAll(self.regexes._step5bRegex, lambda _: "https://")
+
+    # Step 5(c): convert equivalent words
+    def _step5c(self):
+        for equivTuple in self.regexes._equivalents:
+            self._helperReplaceAll(
+                equivTuple[2],
+                lambda m: m.group(1) + equivTuple[0] + m.group(3)
+            )
 
     ##### HELPER FUNCTIONS #####
 

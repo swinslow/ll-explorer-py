@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright 2025 Steve Winslow
 
+import re
 import unittest
 
 from lltokenize import TextPreprocessorConfig, TextPreprocessor
@@ -433,6 +434,66 @@ Don't drop at end #"""
         # procmap should be expanded accordingly
         self.assertEqual(self.tp.procmap, wantProcmap)
 
+    def test_step5c_equivalent_words_one(self):
+        # testing conversion of one equivalent word to its "to" variant
+        t    = "hi & hi"
+        want = "hi and hi"
+        # note procmap adjustment is at end of each changed word -- in this
+        # case, the _space_ character after the word -- because the entire
+        # portion is changed, even if changed characters occur in the middle
+        # of the word
+        wantProcmap = [0, 1, 2, 3, 4, 4, 4, 5, 6]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+        self.tp._step4d()
+        self.tp._step5a()
+        self.tp._step5b()
+        self.tp._step5c()
+
+        # should be converted to applicable equivalent word
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be adjusted accordingly
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_step5c_equivalent_words_many(self):
+        # testing conversion of equivalent words to their "to" variants
+        t    = "and & hi while fulfil fulfils per cent sub-license"
+        want = "and and hi while fulfill fulfils percent sublicense"
+        # note procmap adjustment is at end of each changed word -- in this
+        # case, the _space_ character after the word -- because the entire
+        # portion is changed, even if changed characters occur in the middle
+        # of the word
+        wantProcmap = [0, 1, 2, 3, 4, 5, 5, 5, 6, 7, 8,
+                       9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 21,
+                       22, 23, 24, 25, 26, 27, 28, 29,
+                       30, 31, 32, 33, 34, 35, 36, 37,
+                       39, 40, 41, 42, 43, 44, 45, 46, 47, 48]
+
+        self.tp.orig = t
+        self.tp._step1()
+        self.tp._step2()
+        self.tp._step3()
+        self.tp._step4a()
+        self.tp._step4b()
+        self.tp._step4c()
+        self.tp._step4d()
+        self.tp._step5a()
+        self.tp._step5b()
+        self.tp._step5c()
+
+        # should be converted to applicable equivalent words
+        self.assertEqual(self.tp.proc, want)
+
+        # procmap should be adjusted accordingly
+        self.assertEqual(self.tp.procmap, wantProcmap)
+
     ##### HELPER TESTS #####
 
     def test_helper_replace_chars_same_length(self):
@@ -536,3 +597,19 @@ c3dee"""
 
         # procmap should be updated correctly
         self.assertEqual(self.tp.procmap, wantProcmap)
+
+    def test_helper_equivalent_words_loader(self):
+        # check a couple of words to make sure file has been loaded
+        e1 = self.tp.regexes._equivalents[4]
+        # should be tuple of form (to, from, regex)
+        self.assertEqual(e1[0], "artifact")
+        self.assertEqual(e1[1], "artefact")
+        self.assertEqual(type(e1[2]), re.Pattern)
+        self.assertEqual(e1[2].pattern, "(^|[^a-zA-Z])(artefact)($|[^a-zA-Z])")
+
+        e2 = self.tp.regexes._equivalents[40]
+        # should be tuple of form (to, from, regex)
+        self.assertEqual(e2[0], "sublicense")
+        self.assertEqual(e2[1], "sub license")
+        self.assertEqual(type(e2[2]), re.Pattern)
+        self.assertEqual(e2[2].pattern, "(^|[^a-zA-Z])(sub license)($|[^a-zA-Z])")

@@ -140,7 +140,11 @@ Note the special handling for "sublicense" variants; all should be converted to 
 For each successive non-whitespace portion of the string, check for the presence of any of the `foundN` words.
 If found, replace them with the equivalent `replaceN` alternative, adjusting the character location mapping as needed.
 
+Needs to match words on boundaries; put differently, since "fulfill" contains its variant "fulfil", this should NOT be converted or else it would end up as "fulfilll".
+Equivalent words should only be replaced where the preceding and following characters are non-letter characters.
+
 FIXME consider how to handle changes to the equivalent words file over time.
+Note that the equivalentwords.txt file has been modified to handle the "sublicense" variants.
 
 ## Helpers
 
