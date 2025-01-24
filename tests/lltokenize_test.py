@@ -600,14 +600,14 @@ c3dee"""
 
     def test_helper_equivalent_words_loader(self):
         # check a couple of words to make sure file has been loaded
-        e1 = self.tp.regexes._equivalents[4]
+        e1 = self.tp.cfg.regexes._equivalents[4]
         # should be tuple of form (to, from, regex)
         self.assertEqual(e1[0], "artifact")
         self.assertEqual(e1[1], "artefact")
         self.assertEqual(type(e1[2]), re.Pattern)
         self.assertEqual(e1[2].pattern, "(^|[^a-zA-Z])(artefact)($|[^a-zA-Z])")
 
-        e2 = self.tp.regexes._equivalents[40]
+        e2 = self.tp.cfg.regexes._equivalents[40]
         # should be tuple of form (to, from, regex)
         self.assertEqual(e2[0], "sublicense")
         self.assertEqual(e2[1], "sub license")

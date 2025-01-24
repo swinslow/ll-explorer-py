@@ -147,15 +147,15 @@ class TextPreprocessorConfig:
         # into a single hyphen?
         self.combineHyphens = True
 
+        # regexes for preprocessor
+        self.regexes = TextPreprocessorRegexes(EQUIVALENTWORDS_PATH)
+
 class TextPreprocessor:
     def __init__(self, cfg):
         super(TextPreprocessor, self).__init__()
 
         # preprocessor configuration object
         self.cfg = cfg
-
-        # regexes for preprocessor
-        self.regexes = TextPreprocessorRegexes(EQUIVALENTWORDS_PATH)
 
         # see docs/notes.md for descriptions of the following elements
 
@@ -209,7 +209,7 @@ class TextPreprocessor:
 
     # Step 2: replace leading comment characters with spaces
     def _step2(self):
-        self.proc = re.sub(self.regexes._step2Regex,
+        self.proc = re.sub(self.cfg.regexes._step2Regex,
             lambda m: m.group(1) + m.group(2) + " "*len(m.group(3)) + m.group(4),
             self.orig)
         self.procmap = list(range(len(self.proc)))
@@ -238,36 +238,36 @@ class TextPreprocessor:
     # Step 4(a): remove separators (>3 adjacent non-alphanumeric characters)
     def _step4a(self):
         self._helperReplaceAll(
-            self.regexes._step4aRegex,
+            self.cfg.regexes._step4aRegex,
             lambda m: m.group(1) + m.group(2) + m.group(4)
         )
 
     # Step 4(b): convert whitespace
     def _step4b(self):
-        self._helperReplaceAll(self.regexes._step4bRegex, lambda _: " ")
+        self._helperReplaceAll(self.cfg.regexes._step4bRegex, lambda _: " ")
 
     # Step 4(c): convert hyphen-like characters
     def _step4c(self):
         self._helperReplaceAll(
-            self.regexes._step4cRegex,
+            self.cfg.regexes._step4cRegex,
             lambda m: "-" if self.cfg.combineHyphens else "-"*(len(m.group(0)))
         )
 
     # Step 4(d): convert quote-like characters
     def _step4d(self):
-        self._helperReplaceAll(self.regexes._step4dRegex, lambda _: "'")
+        self._helperReplaceAll(self.cfg.regexes._step4dRegex, lambda _: "'")
 
     # Step 5(a): convert copyright symbol
     def _step5a(self):
-        self._helperReplaceAll(self.regexes._step5aRegex, lambda _: "(c)")
+        self._helperReplaceAll(self.cfg.regexes._step5aRegex, lambda _: "(c)")
 
     # Step 5(b): convert http protocol
     def _step5b(self):
-        self._helperReplaceAll(self.regexes._step5bRegex, lambda _: "https://")
+        self._helperReplaceAll(self.cfg.regexes._step5bRegex, lambda _: "https://")
 
     # Step 5(c): convert equivalent words
     def _step5c(self):
-        for equivTuple in self.regexes._equivalents:
+        for equivTuple in self.cfg.regexes._equivalents:
             self._helperReplaceAll(
                 equivTuple[2],
                 lambda m: m.group(1) + equivTuple[0] + m.group(3)
