@@ -5,56 +5,6 @@ import re
 
 from datatypes import License, LicenseFlat, FlatType, TargetText
 
-##### REGEXES FOR MATCHING GUIDELINES PROCESSING #####
-
-EQUIVALENTWORDS_PATH = "resources/equivalentwords.txt"
-
-class TextPreprocessorRegexes:
-    def __init__(self, equivalentsPath):
-        super(TextPreprocessorRegexes, self).__init__()
-
-        # Step 2: Remove leading comments
-        # FIXME decide handling trailing comment indicators: `**/`, `*/`, etc.
-        # FIXME consider whether this breaks any licenses with text that has
-        # FIXME lines beginning with comment characters, particularly `/`
-        # note we are using the Python \s regex values _except for_ \n,
-        # because we don't want the matching for spacing to capture the line break
-        self._step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
-
-        # Step 4(a): Remove separators on own lines with optional whitespace
-        #_step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)[^a-zA-Z0-9\s]\1{2,}([ \t\r\f\v]*)")
-        self._step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)([^a-zA-Z0-9\s])\3{2,}([ \t\r\f\v]*)")
-
-        # Step 4(b): Convert whitespace
-        self._step4bRegex = re.compile(r"\s+")
-
-        # Step 4(c): Convert hyphen-like characters
-        # FIXME there are a lot of them, consider which others to include
-        self._step4cRegex = re.compile(r"[-‐‑‒–—―]+")
-
-        # Step 4(d): Convert quote-like characters
-        # FIXME there are a lot of them, consider which others to include
-        self._step4dRegex = re.compile(r"['\"«»‘’‚‛“”„‟‹›`]+")
-
-        # Step 5(a): Convert copyright symbol
-        self._step5aRegex = re.compile(r"©")
-
-        # Step 5(b): Convert http protocol
-        self._step5bRegex = re.compile(r"http\:\/\/")
-
-        # Step 5(c): Convert equivalent words
-        # list of tuples in form [(to, from, regexFrom), ...]
-        self._equivalents = []
-        with open(equivalentsPath, "r") as f:
-            lines = f.readlines()
-        for line in lines:
-            res = line.strip().split(",")
-            self._equivalents.append((
-                res[0],
-                res[1],
-                re.compile(r"(^|[^a-zA-Z])(" + res[1] + r")($|[^a-zA-Z])")
-            ))
-
 ##### LICENSE XML TEXT TOKENIZING #####
 
 class LicenseTokenizerConfig:
@@ -137,6 +87,56 @@ class LicenseTokenizer:
         # FIXME IMPLEMENT
         pass
 
+##### REGEXES FOR MATCHING GUIDELINES PROCESSING #####
+
+EQUIVALENTWORDS_PATH = "resources/equivalentwords.txt"
+
+class TextPreprocessorRegexes:
+    def __init__(self, equivalentsPath):
+        super(TextPreprocessorRegexes, self).__init__()
+
+        # Step 2: Remove leading comments
+        # FIXME decide handling trailing comment indicators: `**/`, `*/`, etc.
+        # FIXME consider whether this breaks any licenses with text that has
+        # FIXME lines beginning with comment characters, particularly `/`
+        # note we are using the Python \s regex values _except for_ \n,
+        # because we don't want the matching for spacing to capture the line break
+        self._step2Regex = re.compile(r"(^|\n)([ \t\r\f\v]*)([/*#;%]+)([ \t\r\f\v]*)")
+
+        # Step 4(a): Remove separators on own lines with optional whitespace
+        #_step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)[^a-zA-Z0-9\s]\1{2,}([ \t\r\f\v]*)")
+        self._step4aRegex = re.compile(r"(^|\n)([ \t\r\f\v]*)([^a-zA-Z0-9\s])\3{2,}([ \t\r\f\v]*)")
+
+        # Step 4(b): Convert whitespace
+        self._step4bRegex = re.compile(r"\s+")
+
+        # Step 4(c): Convert hyphen-like characters
+        # FIXME there are a lot of them, consider which others to include
+        self._step4cRegex = re.compile(r"[-‐‑‒–—―]+")
+
+        # Step 4(d): Convert quote-like characters
+        # FIXME there are a lot of them, consider which others to include
+        self._step4dRegex = re.compile(r"['\"«»‘’‚‛“”„‟‹›`]+")
+
+        # Step 5(a): Convert copyright symbol
+        self._step5aRegex = re.compile(r"©")
+
+        # Step 5(b): Convert http protocol
+        self._step5bRegex = re.compile(r"http\:\/\/")
+
+        # Step 5(c): Convert equivalent words
+        # list of tuples in form [(to, from, regexFrom), ...]
+        self._equivalents = []
+        with open(equivalentsPath, "r") as f:
+            lines = f.readlines()
+        for line in lines:
+            res = line.strip().split(",")
+            self._equivalents.append((
+                res[0],
+                res[1],
+                re.compile(r"(^|[^a-zA-Z])(" + res[1] + r")($|[^a-zA-Z])")
+            ))
+
 ##### TEXT PREPROCESSING #####
 
 class TextPreprocessorConfig:
@@ -181,7 +181,17 @@ class TextPreprocessor:
     # given:  target: text string to process
     # result: Preprocessor is completed and values filled in
     def process(self, target):
-        pass
+        self.orig = target
+        self._step1()
+        self._step2()
+        self._step3()
+        self._step4a()
+        self._step4b()
+        self._step4c()
+        self._step4d()
+        self._step5a()
+        self._step5b()
+        self._step5c()
 
     ##### PROCESSING STEP FUNCTIONS #####
 
