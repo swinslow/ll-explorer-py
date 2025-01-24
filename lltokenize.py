@@ -157,6 +157,11 @@ class TextPreprocessor:
         # preprocessor configuration object
         self.cfg = cfg
 
+        # see clear() below for default attribute settings
+        self.clear()
+
+    # Clears any pre-existing values for preprocessor.
+    def clear(self):
         # see docs/notes.md for descriptions of the following elements
 
         # original unmodified string being tested for matches
@@ -181,6 +186,7 @@ class TextPreprocessor:
     # given:  target: text string to process
     # result: Preprocessor is completed and values filled in
     def process(self, target):
+        self.clear()
         self.orig = target
         self._step1()
         self._step2()
