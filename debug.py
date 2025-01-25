@@ -64,7 +64,8 @@ class DebugUI:
 
         # set up original text widgets
         self.origlbl = ttk.Label(self.frameDebug, text="original")
-        self.origtext = Text(self.frameDebug, width=80, height=40, wrap="none")
+        self.origtext = Text(self.frameDebug, width=80, height=40,
+                             wrap="none", undo=True)
         self.origys = ttk.Scrollbar(self.frameDebug, orient=VERTICAL,
                                     command=self.origtext.yview)
         self.origxs = ttk.Scrollbar(self.frameDebug, orient=HORIZONTAL,
