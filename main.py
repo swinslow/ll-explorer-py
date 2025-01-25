@@ -30,6 +30,14 @@ def printFlat(fns, indent=0):
         if fn.type == FlatType.OPTIONAL:
             printFlat(fn.children, indent+2)
 
+def tempFlatten(parser, ad, licId):
+    lic = ad.lics[licId]
+    #node = lic.textNode
+    #print(type(node))
+    #printNode(node)
+    parser.flatten(lic)
+    printFlat(lic.textFlat)
+
 if __name__ == "__main__":
     xmldirpath = "/Users/steve/programming/python/testing/lxml/licenses"
     cfg = XMLParserConfig()
@@ -39,14 +47,7 @@ if __name__ == "__main__":
     ad.ui = UI()
     ad.setLicenses(parser.loadAll(xmldirpath))
     ### FIXME TEMP
-    licMIT = ad.lics["MIT"]
-    #nodeMIT = licMIT.textNode
-    #print(type(nodeMIT))
-    #printNode(nodeMIT)
-    parser.flatten(licMIT)
-    printFlat(licMIT.textFlat)
-    import sys
-    sys.exit(1)
+    #tempFlatten(parser, ad, "MIT")
     ### FIXME END TEMP
     ad.ui.setup(ad)
     ad.ui.run()

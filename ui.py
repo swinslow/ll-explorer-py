@@ -4,6 +4,8 @@
 from tkinter import *
 from tkinter import ttk
 
+from debug import DebugUI
+
 class UI:
     def __init__(self):
         super(UI, self).__init__()
@@ -16,6 +18,9 @@ class UI:
 
         # Tk root window
         self.root = None
+
+        # Separate debug UI object -- DebugUI from debug.py
+        self.debug = None
 
         # primary frame in root window
         self.c = None
@@ -100,6 +105,11 @@ class UI:
         # set up selection bindings
         self.licids.bind("<<ListboxSelect>>",
                          lambda e: self.selectId(self.licids.curselection()))
+
+        # set up debug window
+        # FIXME determine switch for whether / when to activate
+        self.debug = DebugUI()
+        self.debug.setup(self.root)
 
     # Update list of licenses from AppData
     # FIXME this logic is unnecessarily complex and should be cleaned up
