@@ -22,8 +22,14 @@ class UI:
         # Separate debug UI object -- DebugUI from debug.py
         self.debug = None
 
-        # primary frame in root window
-        self.c = None
+        # primary notebook in root window
+        self.notebook = None
+
+        # frame for license browser
+        self.cBrowse = None
+
+        # frame for license matcher
+        self.cMatch = None
 
         # license IDs listbox and scrollbar
         self.licids = None
@@ -52,30 +58,38 @@ class UI:
         self.appdata = appdata
         self.updateLics()
 
-        # set up root window overall frame
-        self.c = ttk.Frame(self.root, padding="5 5 12 0")
-        self.c.grid(column=0, row=0, sticky=(N, W, E, S))
+        # set up overall root window notebook
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.grid()
+
+        # set up frame for license browser
+        self.cBrowse = ttk.Frame(self.notebook, padding="5 5 12 0")
+        self.notebook.add(self.cBrowse, text="Browse")
+
+        # set up placeholder frame for license matcher
+        self.cMatch = ttk.Frame(self.notebook, padding="5 5 12 0")
+        self.notebook.add(self.cMatch, text="Match")
 
         # set up UI for list of license IDs
-        self.licids = Listbox(self.c, height=20, width=30,
+        self.licids = Listbox(self.cBrowse, height=20, width=30,
                               listvariable=self.licenseIDVar,
                               selectmode="browse")
         self.licids.grid(column=0, row=1, sticky=(N, W, E, S))
-        self.licidsys = ttk.Scrollbar(self.c, orient=VERTICAL,
+        self.licidsys = ttk.Scrollbar(self.cBrowse, orient=VERTICAL,
                                       command=self.licids.yview)
         self.licidsys.grid(column=1, row=1, sticky=(N, S))
         self.licids.configure(yscrollcommand=self.licidsys.set)
 
-        ttk.Separator(self.c, orient=VERTICAL).grid(
+        ttk.Separator(self.cBrowse, orient=VERTICAL).grid(
                 column=2, row=0, rowspan=3, sticky=(N,S))
 
         # set up UI for license XML content
         self.licSelectedID = StringVar()
-        self.licxmllbl = ttk.Label(self.c, textvariable=self.licSelectedID)
-        self.licxml = Text(self.c, width=100, height=50, wrap="none")
-        self.licxmlys = ttk.Scrollbar(self.c, orient=VERTICAL,
+        self.licxmllbl = ttk.Label(self.cBrowse, textvariable=self.licSelectedID)
+        self.licxml = Text(self.cBrowse, width=150, height=50, wrap="none")
+        self.licxmlys = ttk.Scrollbar(self.cBrowse, orient=VERTICAL,
                                       command=self.licxml.yview)
-        self.licxmlxs = ttk.Scrollbar(self.c, orient=HORIZONTAL,
+        self.licxmlxs = ttk.Scrollbar(self.cBrowse, orient=HORIZONTAL,
                                       command=self.licxml.xview)
         self.licxml["yscrollcommand"] = self.licxmlys.set
         self.licxml["xscrollcommand"] = self.licxmlxs.set
@@ -89,9 +103,10 @@ class UI:
         # configure weights for grid resizing
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
-        self.c.columnconfigure(3, weight=1)
-        self.c.columnconfigure(6, weight=1)
-        self.c.rowconfigure(1, weight=1)
+        self.notebook.columnconfigure(0, weight=1)
+        self.notebook.rowconfigure(0, weight=1)
+        self.cBrowse.columnconfigure(3, weight=1)
+        self.cBrowse.rowconfigure(1, weight=1)
 
         # FIXME note that the rest should maybe be pulled into separate function
 
@@ -108,8 +123,8 @@ class UI:
 
         # set up debug window
         # FIXME determine switch for whether / when to activate
-        self.debug = DebugUI()
-        self.debug.setup(self.root)
+        #self.debug = DebugUI()
+        #self.debug.setup(self.root)
 
     # Update list of licenses from AppData
     # FIXME this logic is unnecessarily complex and should be cleaned up
