@@ -178,7 +178,8 @@ class XMLParser:
             childnode, childTailnode = self.processXMLNode(c)
             children.append(childnode)
             # FIXME is this the right place to add the child's tail node?
-            children.append(childTailnode)
+            if childTailnode is not None:
+                children.append(childTailnode)
 
         # if any tail var exists, create a whitespace or text node,
         # depending if we have non-whitespace .tail content
