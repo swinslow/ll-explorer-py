@@ -44,11 +44,6 @@ class UI:
         self.licxmlys = None
         self.licxmlxs = None
 
-        # processed and flattened XML and scrollbars
-        self.licflat = None
-        self.licflatys = None
-        self.licflatxs = None
-
     def setup(self, appdata):
         # set up Tk root window
         self.root = Tk()
@@ -123,8 +118,8 @@ class UI:
 
         # set up debug window
         # FIXME determine switch for whether / when to activate
-        #self.debug = DebugUI()
-        #self.debug.setup(self.root)
+        self.debug = DebugUI()
+        self.debug.setup(self.root, self.appdata.lics)
 
     # Update list of licenses from AppData
     # FIXME this logic is unnecessarily complex and should be cleaned up

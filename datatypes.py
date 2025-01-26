@@ -162,10 +162,10 @@ class AppData:
         # dict of license ID => datatypes.License
         # set with call to setLicenses() so that the UI components
         # can be notified of changes, if UI has been loaded!
-        lics = {}
+        self.lics = {}
 
         # user interface
-        ui = None
+        self.ui = None
 
     def setLicenses(self, lics):
         self.lics = lics
