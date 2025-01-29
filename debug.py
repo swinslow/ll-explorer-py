@@ -4,6 +4,7 @@
 from tkinter import *
 from tkinter import ttk
 
+from datatypes import FlatType
 from lltokenize import TextPreprocessorConfig, TextPreprocessor
 
 PADDING_COORDS = "5 5 12 0"
@@ -94,6 +95,7 @@ class DebugUI:
         self._setupFrameTP()
         self._setupFrameToken(lics)
 
+        self.notebook.select(1)
         self.notebook.grid()
 
         # configure weights for grid resizing
@@ -204,8 +206,34 @@ class DebugUI:
         ttk.Separator(self.cDebugToken, orient=VERTICAL).grid(
             column=5, row=0, rowspan=3, sticky=(N, S))
 
+        # set up UI with treeview for flattened XML content
+        self.tokenLicFlat = ttk.Treeview(self.cDebugToken,
+            height=50, columns=("line", "contents"))
+        self.tokenLicFlatys = ttk.Scrollbar(self.cDebugToken, orient=VERTICAL,
+                                        command=self.tokenLicFlat.yview)
+        self.tokenLicFlatxs = ttk.Scrollbar(self.cDebugToken, orient=HORIZONTAL,
+                                        command=self.tokenLicFlat.xview)
+        self.tokenLicFlat["yscrollcommand"] = self.tokenLicFlatys.set
+        self.tokenLicFlat["xscrollcommand"] = self.tokenLicFlatxs.set
+
+        self.tokenLicFlat.column("#0", width=80, anchor=W)
+        self.tokenLicFlat.heading("#0", text="Type", anchor=W)
+        self.tokenLicFlat.column("line", width=30, anchor=W)
+        self.tokenLicFlat.heading("line", text="Line", anchor=W)
+        #self.tokenLicFlat.column("col", width=30, anchor=W)
+        #self.tokenLicFlat.heading("col", text="Col", anchor=W)
+        #self.tokenLicFlat.column("origtype", width=80, anchor=W)
+        #self.tokenLicFlat.heading("origtype", text="Orig Type", anchor=W)
+        self.tokenLicFlat.column("contents", width=300, anchor=W)
+        self.tokenLicFlat.heading("contents", text="Contents", anchor=W)
+
+        self.tokenLicFlat.grid(column=6, row=1, sticky=(N,S,E,W))
+        self.tokenLicFlatys.grid(column=7, row=1, sticky=(N,S))
+        self.tokenLicFlatxs.grid(column=6, row=2, sticky=(E,W))
+
         # configure weights for grid resizing
         self.cDebugToken.columnconfigure(3, weight=1)
+        self.cDebugToken.columnconfigure(6, weight=1)
         self.cDebugToken.rowconfigure(1, weight=1)
 
         # FIXME note that the rest should maybe be pulled into separate function
@@ -254,5 +282,49 @@ class DebugUI:
             licid = sorted(self.tokenLics.keys(), key=str.casefold)[i]
             self.tokenLicSelectedIDVar.set(licid)
             self.tokenLicXML.insert('1.0', self.tokenLics[licid].origXML)
+            self._fillFlatTreeView(licid)
 
         self.tokenLicXML["state"] = "disabled"
+
+    # Called from _selectTokenLicId: Fill flat tree view for selected ID
+    def _fillFlatTreeView(self, licid):
+        # clear all existing tree nodes
+        self.tokenLicFlat.delete(*self.tokenLicFlat.get_children())
+
+        # add a node recursively for each flattened element
+        itemId = 0
+        for n in self.tokenLics[licid].textFlat:
+            itemId += 1
+            self._insertFlatTreeViewNode("", n, itemId)
+        self.tokenLicFlat.see("1")
+
+    # Called from _fillFlatTreeView: Helper for inserting flattened token nodes
+    def _insertFlatTreeViewNode(self, curnode, n, itemId):
+        # FIXME decide whether to retain origtype within LicenseFlat nodes
+        # FIXME remove column number column if not tracking
+        match n.type:
+            case FlatType.WHITESPACE:
+                self.tokenLicFlat.insert(curnode, "end", itemId,
+                    text="SPACE", open=True, values=(n.lineno, ""))
+            case FlatType.TEXT:
+                self.tokenLicFlat.insert(curnode, "end", itemId,
+                    text="TEXT", open=True, values=(n.lineno, n.text.strip()))
+            case FlatType.OPTIONAL:
+                self.tokenLicFlat.insert(curnode, "end", itemId,
+                    text="OPTIONAL", open=True, values=(n.lineno, ""))
+                # insert each child item
+                subItemId = 0
+                for subN in n.children:
+                    subItemId += 1
+                    self._insertFlatTreeViewNode(itemId, subN,
+                        f"{itemId}.{subItemId}")
+            case FlatType.REGEX:
+                self.tokenLicFlat.insert(curnode, "end", itemId,
+                    text="REGEX", open=True, values=(n.lineno, n.regex))
+
+    # Called from _insertFlatTreeViewNode for OPTIONAL / REGEX:
+    # Get character to display spacing type
+    def _getSpacingChar(self, n):
+        # FIXME need to determine whether bringing spacing into LicenseFlat
+        # FIXME and/or whether to track back to original node
+        return ""

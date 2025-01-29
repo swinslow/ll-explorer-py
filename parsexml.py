@@ -281,9 +281,8 @@ class XMLParser:
                     self._addFlatsOptional(c, flats, self.cfg.otherNodeSpacing)
                 case NodeType.OPTIONAL:
                     self._addFlatsOptional(c, flats, c.spacing)
-                case NodeType.BR:
-                    pass
-                case NodeType.WHITESPACE:
+                case (NodeType.BR |
+                      NodeType.WHITESPACE):
                     self._addFlatsWhitespace(c, flats)
                 case _:
                     raise RuntimeError(f"expected valid NodeType, got {c.type} for line {c.lineno}")
